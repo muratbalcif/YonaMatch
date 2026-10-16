@@ -428,15 +428,15 @@ private fun YonaMatchApp() {
                         }
                     }
                 }) { Text("💡", fontSize = 30.sp) }
-                Text("Hafıza Kartları · Bölüm $level", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                Text("Çiftleri bul!  ·  Deneme: $attempts  ·  ${matched.size / 2}/${cards.size / 2}")
-                val rows = (cards.size + 3) / 4
-                LazyVerticalGrid(columns = GridCells.Fixed(4), modifier = Modifier.height((rows * 88 + (rows - 1) * 8).dp),
+                val memoryColumns = if (cards.size <= 6) 3 else 4
+                val rows = (cards.size + memoryColumns - 1) / memoryColumns
+                val memoryCardHeight = if (rows <= 2) 148.dp else if (rows == 3) 116.dp else 88.dp
+                LazyVerticalGrid(columns = GridCells.Fixed(memoryColumns), modifier = Modifier.height(memoryCardHeight * rows + 10.dp * (rows - 1)),
                     userScrollEnabled = false, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     itemsIndexed(cards) { index, symbol ->
                         val visible = index in opened || index in matched || index in memoryHintPair
                         Surface(
-                            modifier = Modifier.aspectRatio(1f).clickable(enabled = index !in matched && index !in opened && !mismatch) {
+                            modifier = Modifier.fillMaxWidth().height(memoryCardHeight).clickable(enabled = index !in matched && index !in opened && !mismatch) {
                                 val next = opened + index
                                 if (next.size == 2) {
                                     memoryHintPair = emptySet()
@@ -452,7 +452,7 @@ private fun YonaMatchApp() {
                         ) { Box(contentAlignment = Alignment.Center) { AnimatedContent(targetState = visible, label = "card-flip") { isOpen -> Text(if (isOpen) symbol else "❔", fontSize = 29.sp) } } }
                     }
                 }
-                TextButton(onClick = { round++ }) { Text("Yeniden Başlat") }
+                TextButton(onClick = { round++ }) { Text("↻", fontSize = 32.sp) }
                 }
             }
             "result" -> {
