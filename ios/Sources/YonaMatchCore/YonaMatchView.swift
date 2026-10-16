@@ -31,6 +31,26 @@ public struct YonaMatchView: View {
         ("Şekil Eşleştirme", "🔺", .green), ("Renk Eşleştirme", "🎨", .purple),
         ("Parçaları Birleştir", "🍎", .pink), ("İlişki Kurma", "🐮", .yellow)
     ]
+    private func matchColor(_ id: String) -> Color {
+        switch id {
+        case "red": return Color(red: 0.94, green: 0.27, blue: 0.27)
+        case "blue": return Color(red: 0.23, green: 0.51, blue: 0.96)
+        case "green": return Color(red: 0.13, green: 0.77, blue: 0.37)
+        case "yellow": return Color(red: 0.98, green: 0.8, blue: 0.08)
+        case "purple": return Color(red: 0.66, green: 0.33, blue: 0.97)
+        default: return .gray
+        }
+    }
+    @ViewBuilder private func matchVisual(_ item: MatchItem, faded: Bool = false) -> some View {
+        if selected == 3 {
+            Circle().fill(matchColor(item.id).opacity(faded ? 0.25 : 1))
+                .frame(width: 42, height: 42)
+        } else {
+            Text(item.symbol).font(.system(size: 38))
+                .foregroundStyle(navy.opacity(faded ? 0.22 : 1))
+        }
+    }
+
     private enum Page { case home, levels, game, result }
 
     public init() {}
@@ -40,10 +60,10 @@ public struct YonaMatchView: View {
             VStack(alignment: .leading, spacing: 18) {
                 HStack {
                     if page != .home {
-                        Button("‹ Geri") { page = (page == .game || page == .result) ? .levels : .home }
+                        Button(page == .game && (selected == 2 || selected == 3) ? "‹" : "‹ Geri") { page = (page == .game || page == .result) ? .levels : .home }
                     }
                     Spacer()
-                    Text("🧩 YonaMatch").font(.title.bold()).foregroundStyle(navy)
+                    if page != .game || (selected != 2 && selected != 3) { Text("🧩 YonaMatch").font(.title.bold()).foregroundStyle(navy) }
                     Spacer()
                 }
                 switch page {
@@ -68,7 +88,7 @@ public struct YonaMatchView: View {
                                 VStack(spacing: 8) {
                                     Text(modes[index].1).font(.system(size: 44))
                                     Text(modes[index].0).font(.subheadline.bold()).multilineTextAlignment(.center)
-                                    if index != 0 { Text("Yakında").font(.caption) }
+                                    if index > 3 { Text("Yakında").font(.caption) }
                                 }
                                 .frame(maxWidth: .infinity, minHeight: 120)
                                 .foregroundStyle(navy)
@@ -105,7 +125,7 @@ public struct YonaMatchView: View {
                         HStack(spacing: 8) {
                             ForEach(matchGame.items.filter { !matchGame.matched.contains($0.id) }) { item in
                                 Button { matchSelection = item.id } label: {
-                                    Text(item.symbol).font(.system(size: 30))
+                                    matchVisual(item)
                                         .frame(maxWidth: .infinity, minHeight: 84)
                                         .background(matchSelection == item.id ? Color.yellow.opacity(0.5) : Color.mint.opacity(0.2), in: RoundedRectangle(cornerRadius: 14))
                                 }
@@ -118,9 +138,10 @@ public struct YonaMatchView: View {
                                     guard let source = matchSelection else { return }
                                     submitMatching(source: source, target: item.id)
                                 } label: {
-                                    Text(matchGame.matched.contains(item.id) ? "✓" : item.symbol)
-                                        .font(.system(size: 30))
-                                        .opacity(selected == 2 && !matchGame.matched.contains(item.id) ? 0.22 : 1)
+                                    Group {
+                                        if matchGame.matched.contains(item.id) { Text("✓").font(.system(size: 30)) }
+                                        else { matchVisual(item, faded: selected == 2) }
+                                    }
                                         .frame(maxWidth: .infinity, minHeight: 84)
                                         .background(matchGame.matched.contains(item.id) ? Color.mint.opacity(0.5) : Color.purple.opacity(0.2), in: RoundedRectangle(cornerRadius: 14))
                                 }
