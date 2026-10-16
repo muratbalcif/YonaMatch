@@ -19,7 +19,7 @@ private struct MatchContent: Decodable {
 }
 public enum MatchLevelRepository {
     private static func load(_ type: String) throws -> MatchContent {
-        guard type == "shape" || type == "color" else { throw LevelLoadError.invalidSchema }
+        guard type == "shape" || type == "color" || type == "halves" else { throw LevelLoadError.invalidSchema }
         guard let url = Bundle.module.url(forResource: type, withExtension: "json", subdirectory: "levels") else {
             throw LevelLoadError.missingResource
         }
