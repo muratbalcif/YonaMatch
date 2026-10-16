@@ -248,10 +248,17 @@ private fun YonaMatchApp() {
                         AnimatedVisibility(visible = matchCount > 0) {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text("✨", fontSize = 28.sp)
-                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    matchGame.items.filter { it.id in matchGame.matched }.forEach { solved ->
+                                LazyVerticalGrid(
+                                    columns = GridCells.Fixed(3),
+                                    modifier = Modifier.height(170.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    items(matchGame.items.filter { it.id in matchGame.matched }, key = { it.id }) { solved ->
                                         Surface(color = mint.copy(alpha = 0.3f), shape = RoundedCornerShape(18.dp)) {
-                                            Text(solved.symbol, fontSize = 38.sp, modifier = Modifier.padding(10.dp))
+                                            Box(Modifier.height(72.dp), contentAlignment = Alignment.Center) {
+                                                Text(solved.symbol, fontSize = 38.sp)
+                                            }
                                         }
                                     }
                                 }
