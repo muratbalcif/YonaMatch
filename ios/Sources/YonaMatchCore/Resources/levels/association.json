@@ -1,0 +1,628 @@
+{
+  "schemaVersion": 1,
+  "gameType": "association",
+  "catalog": [
+    {
+      "id": "cow",
+      "symbol": "🐮",
+      "label": "İnek"
+    },
+    {
+      "id": "milk",
+      "symbol": "🥛",
+      "label": "Süt"
+    },
+    {
+      "id": "bee",
+      "symbol": "🐝",
+      "label": "Arı"
+    },
+    {
+      "id": "honey",
+      "symbol": "🍯",
+      "label": "Bal"
+    },
+    {
+      "id": "hen",
+      "symbol": "🐔",
+      "label": "Tavuk"
+    },
+    {
+      "id": "egg",
+      "symbol": "🥚",
+      "label": "Yumurta"
+    },
+    {
+      "id": "tree",
+      "symbol": "🌳",
+      "label": "Ağaç"
+    },
+    {
+      "id": "apple",
+      "symbol": "🍎",
+      "label": "Elma"
+    },
+    {
+      "id": "cloud",
+      "symbol": "☁️",
+      "label": "Bulut"
+    },
+    {
+      "id": "rain",
+      "symbol": "🌧️",
+      "label": "Yağmur"
+    },
+    {
+      "id": "sun",
+      "symbol": "☀️",
+      "label": "Güneş"
+    },
+    {
+      "id": "flower",
+      "symbol": "🌻",
+      "label": "Çiçek"
+    },
+    {
+      "id": "sheep",
+      "symbol": "🐑",
+      "label": "Koyun"
+    },
+    {
+      "id": "wool",
+      "symbol": "🧶",
+      "label": "Yün"
+    },
+    {
+      "id": "key",
+      "symbol": "🔑",
+      "label": "Anahtar"
+    },
+    {
+      "id": "lock",
+      "symbol": "🔒",
+      "label": "Kilit"
+    },
+    {
+      "id": "toothbrush",
+      "symbol": "🪥",
+      "label": "Diş Fırçası"
+    },
+    {
+      "id": "tooth",
+      "symbol": "🦷",
+      "label": "Diş"
+    },
+    {
+      "id": "shoe",
+      "symbol": "👟",
+      "label": "Ayakkabı"
+    },
+    {
+      "id": "foot",
+      "symbol": "🦶",
+      "label": "Ayak"
+    },
+    {
+      "id": "bird",
+      "symbol": "🐦",
+      "label": "Kuş"
+    },
+    {
+      "id": "nest",
+      "symbol": "🪺",
+      "label": "Yuva"
+    },
+    {
+      "id": "fish",
+      "symbol": "🐟",
+      "label": "Balık"
+    },
+    {
+      "id": "water",
+      "symbol": "💧",
+      "label": "Su"
+    }
+  ],
+  "levels": [
+    {
+      "id": "association-001",
+      "order": 1,
+      "pairs": [
+        {
+          "source": "cow",
+          "target": "milk"
+        },
+        {
+          "source": "bee",
+          "target": "honey"
+        },
+        {
+          "source": "hen",
+          "target": "egg"
+        }
+      ],
+      "idealAttempts": 3
+    },
+    {
+      "id": "association-002",
+      "order": 2,
+      "pairs": [
+        {
+          "source": "hen",
+          "target": "egg"
+        },
+        {
+          "source": "tree",
+          "target": "apple"
+        },
+        {
+          "source": "cloud",
+          "target": "rain"
+        }
+      ],
+      "idealAttempts": 3
+    },
+    {
+      "id": "association-003",
+      "order": 3,
+      "pairs": [
+        {
+          "source": "cloud",
+          "target": "rain"
+        },
+        {
+          "source": "sun",
+          "target": "flower"
+        },
+        {
+          "source": "sheep",
+          "target": "wool"
+        }
+      ],
+      "idealAttempts": 3
+    },
+    {
+      "id": "association-004",
+      "order": 4,
+      "pairs": [
+        {
+          "source": "sheep",
+          "target": "wool"
+        },
+        {
+          "source": "key",
+          "target": "lock"
+        },
+        {
+          "source": "toothbrush",
+          "target": "tooth"
+        }
+      ],
+      "idealAttempts": 3
+    },
+    {
+      "id": "association-005",
+      "order": 5,
+      "pairs": [
+        {
+          "source": "toothbrush",
+          "target": "tooth"
+        },
+        {
+          "source": "shoe",
+          "target": "foot"
+        },
+        {
+          "source": "bird",
+          "target": "nest"
+        }
+      ],
+      "idealAttempts": 3
+    },
+    {
+      "id": "association-006",
+      "order": 6,
+      "pairs": [
+        {
+          "source": "bird",
+          "target": "nest"
+        },
+        {
+          "source": "fish",
+          "target": "water"
+        },
+        {
+          "source": "cow",
+          "target": "milk"
+        },
+        {
+          "source": "bee",
+          "target": "honey"
+        }
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "association-007",
+      "order": 7,
+      "pairs": [
+        {
+          "source": "cow",
+          "target": "milk"
+        },
+        {
+          "source": "bee",
+          "target": "honey"
+        },
+        {
+          "source": "hen",
+          "target": "egg"
+        },
+        {
+          "source": "tree",
+          "target": "apple"
+        }
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "association-008",
+      "order": 8,
+      "pairs": [
+        {
+          "source": "hen",
+          "target": "egg"
+        },
+        {
+          "source": "tree",
+          "target": "apple"
+        },
+        {
+          "source": "cloud",
+          "target": "rain"
+        },
+        {
+          "source": "sun",
+          "target": "flower"
+        }
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "association-009",
+      "order": 9,
+      "pairs": [
+        {
+          "source": "cloud",
+          "target": "rain"
+        },
+        {
+          "source": "sun",
+          "target": "flower"
+        },
+        {
+          "source": "sheep",
+          "target": "wool"
+        },
+        {
+          "source": "key",
+          "target": "lock"
+        }
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "association-010",
+      "order": 10,
+      "pairs": [
+        {
+          "source": "sheep",
+          "target": "wool"
+        },
+        {
+          "source": "key",
+          "target": "lock"
+        },
+        {
+          "source": "toothbrush",
+          "target": "tooth"
+        },
+        {
+          "source": "shoe",
+          "target": "foot"
+        }
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "association-011",
+      "order": 11,
+      "pairs": [
+        {
+          "source": "toothbrush",
+          "target": "tooth"
+        },
+        {
+          "source": "shoe",
+          "target": "foot"
+        },
+        {
+          "source": "bird",
+          "target": "nest"
+        },
+        {
+          "source": "fish",
+          "target": "water"
+        },
+        {
+          "source": "cow",
+          "target": "milk"
+        }
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "association-012",
+      "order": 12,
+      "pairs": [
+        {
+          "source": "bird",
+          "target": "nest"
+        },
+        {
+          "source": "fish",
+          "target": "water"
+        },
+        {
+          "source": "cow",
+          "target": "milk"
+        },
+        {
+          "source": "bee",
+          "target": "honey"
+        },
+        {
+          "source": "hen",
+          "target": "egg"
+        }
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "association-013",
+      "order": 13,
+      "pairs": [
+        {
+          "source": "cow",
+          "target": "milk"
+        },
+        {
+          "source": "bee",
+          "target": "honey"
+        },
+        {
+          "source": "hen",
+          "target": "egg"
+        },
+        {
+          "source": "tree",
+          "target": "apple"
+        },
+        {
+          "source": "cloud",
+          "target": "rain"
+        }
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "association-014",
+      "order": 14,
+      "pairs": [
+        {
+          "source": "hen",
+          "target": "egg"
+        },
+        {
+          "source": "tree",
+          "target": "apple"
+        },
+        {
+          "source": "cloud",
+          "target": "rain"
+        },
+        {
+          "source": "sun",
+          "target": "flower"
+        },
+        {
+          "source": "sheep",
+          "target": "wool"
+        }
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "association-015",
+      "order": 15,
+      "pairs": [
+        {
+          "source": "cloud",
+          "target": "rain"
+        },
+        {
+          "source": "sun",
+          "target": "flower"
+        },
+        {
+          "source": "sheep",
+          "target": "wool"
+        },
+        {
+          "source": "key",
+          "target": "lock"
+        },
+        {
+          "source": "toothbrush",
+          "target": "tooth"
+        }
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "association-016",
+      "order": 16,
+      "pairs": [
+        {
+          "source": "sheep",
+          "target": "wool"
+        },
+        {
+          "source": "key",
+          "target": "lock"
+        },
+        {
+          "source": "toothbrush",
+          "target": "tooth"
+        },
+        {
+          "source": "shoe",
+          "target": "foot"
+        },
+        {
+          "source": "bird",
+          "target": "nest"
+        },
+        {
+          "source": "fish",
+          "target": "water"
+        }
+      ],
+      "idealAttempts": 6
+    },
+    {
+      "id": "association-017",
+      "order": 17,
+      "pairs": [
+        {
+          "source": "toothbrush",
+          "target": "tooth"
+        },
+        {
+          "source": "shoe",
+          "target": "foot"
+        },
+        {
+          "source": "bird",
+          "target": "nest"
+        },
+        {
+          "source": "fish",
+          "target": "water"
+        },
+        {
+          "source": "cow",
+          "target": "milk"
+        },
+        {
+          "source": "bee",
+          "target": "honey"
+        }
+      ],
+      "idealAttempts": 6
+    },
+    {
+      "id": "association-018",
+      "order": 18,
+      "pairs": [
+        {
+          "source": "bird",
+          "target": "nest"
+        },
+        {
+          "source": "fish",
+          "target": "water"
+        },
+        {
+          "source": "cow",
+          "target": "milk"
+        },
+        {
+          "source": "bee",
+          "target": "honey"
+        },
+        {
+          "source": "hen",
+          "target": "egg"
+        },
+        {
+          "source": "tree",
+          "target": "apple"
+        }
+      ],
+      "idealAttempts": 6
+    },
+    {
+      "id": "association-019",
+      "order": 19,
+      "pairs": [
+        {
+          "source": "cow",
+          "target": "milk"
+        },
+        {
+          "source": "bee",
+          "target": "honey"
+        },
+        {
+          "source": "hen",
+          "target": "egg"
+        },
+        {
+          "source": "tree",
+          "target": "apple"
+        },
+        {
+          "source": "cloud",
+          "target": "rain"
+        },
+        {
+          "source": "sun",
+          "target": "flower"
+        }
+      ],
+      "idealAttempts": 6
+    },
+    {
+      "id": "association-020",
+      "order": 20,
+      "pairs": [
+        {
+          "source": "hen",
+          "target": "egg"
+        },
+        {
+          "source": "tree",
+          "target": "apple"
+        },
+        {
+          "source": "cloud",
+          "target": "rain"
+        },
+        {
+          "source": "sun",
+          "target": "flower"
+        },
+        {
+          "source": "sheep",
+          "target": "wool"
+        },
+        {
+          "source": "key",
+          "target": "lock"
+        }
+      ],
+      "idealAttempts": 6
+    }
+  ]
+}
