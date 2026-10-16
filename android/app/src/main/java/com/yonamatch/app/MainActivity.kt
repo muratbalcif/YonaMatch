@@ -202,7 +202,7 @@ private fun YonaMatchApp() {
                                 color = if (n <= (when (selected) { 1 -> shadowUnlocked; 2 -> shapeUnlocked; 3 -> colorUnlocked; 4 -> halvesUnlocked; 5 -> associationUnlocked; else -> unlocked })) yellow.copy(alpha = 0.35f) else Color.LightGray.copy(alpha = 0.25f),
                                 shape = RoundedCornerShape(16.dp)
                             ) {
-                                Box(contentAlignment = Alignment.Center) { Text(if (n <= (when (selected) { 1 -> shadowUnlocked; 2 -> shapeUnlocked; 3 -> colorUnlocked; else -> unlocked })) "$n ⭐" else "🔒", fontSize = 18.sp) }
+                                Box(contentAlignment = Alignment.Center) { Text(if (n <= (when (selected) { 1 -> shadowUnlocked; 2 -> shapeUnlocked; 3 -> colorUnlocked; 4 -> halvesUnlocked; 5 -> associationUnlocked; else -> unlocked })) "$n ⭐" else "🔒", fontSize = 18.sp) }
                             }
                         }
                     }
@@ -249,7 +249,8 @@ private fun YonaMatchApp() {
                 } else {
                     MemoryPlayScreen(level, round) { completedAttempts, usedHint ->
                         unlocked = maxOf(unlocked, (level + 1).coerceAtMost(20))
-                        resultStars = gameProgress.finish("memory", level, completedAttempts, levels[level - 1].pairs, hintsUsed = usedHint)
+                        resultStars = gameProgress.finish("memory", level, completedAttempts, levels[level - 1].idealAttempts, hintsUsed = usedHint)
+                        progress.finish(level, resultStars)
                         page = "result"
                     }
                 }
