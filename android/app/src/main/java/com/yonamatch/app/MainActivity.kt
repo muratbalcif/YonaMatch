@@ -153,6 +153,8 @@ private fun YonaMatchApp() {
     var matched by remember(round, level) { mutableStateOf<Set<Int>>(emptySet()) }
     var attempts by remember(round, level) { mutableIntStateOf(0) }
     var mismatch by remember(round, level) { mutableStateOf(false) }
+    var memoryHintUsed by remember(round, level) { mutableStateOf(false) }
+    var memoryHintPair by remember(round, level) { mutableStateOf<Set<Int>>(emptySet()) }
     var unlocked by remember { mutableIntStateOf(progress.unlocked()) }
     val shadowPrefs = remember(context) { context.getSharedPreferences("yonamatch_shadow", 0) }
     var shadowUnlocked by remember { mutableIntStateOf(shadowPrefs.getInt("unlocked", 1)) }
@@ -181,7 +183,9 @@ private fun YonaMatchApp() {
     val shadow = remember(shadowRound, level) { ShadowGame(shadowLevels[level - 1].items) }
     var selectedShadow by remember(shadowRound) { mutableStateOf<String?>(null) }
     var shadowMatches by remember(shadowRound) { mutableIntStateOf(0) }
-    var shadowFeedback by remember(shadowRound) { mutableStateOf("Önce hayvanı, sonra gölgesini seç.") }
+    var shadowFeedback by remember(shadowRound, level) { mutableStateOf("Önce hayvanı, sonra gölgesini seç.") }
+    var shadowHintUsed by remember(shadowRound, level) { mutableStateOf(false) }
+    var shadowHintId by remember(shadowRound, level) { mutableStateOf<String?>(null) }
     LaunchedEffect(mismatch) {
         if (mismatch) {
             kotlinx.coroutines.delay(900)
@@ -195,7 +199,7 @@ private fun YonaMatchApp() {
             if (next > unlocked) {
                 unlocked = next
             }
-            resultStars = gameProgress.finish("memory", level, attempts, levels[level - 1].idealAttempts)
+            resultStars = gameProgress.finish("memory", level, attempts, levels[level - 1].idealAttempts, hintsUsed = memoryHintUsed)
             progress.finish(level, resultStars)
             page = "result"
         }
@@ -362,6 +366,13 @@ private fun YonaMatchApp() {
                     TextButton(onClick = { matchRound++ }) { Text("↻", fontSize = 30.sp) }
                 } else if (selected == 1) {
                     Text("🐘 Gölgesini Bul", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    TextButton(onClick = {
+                        shadow.items.firstOrNull { it.id !in shadow.matched }?.let {
+                            shadowHintUsed = true
+                            shadowHintId = it.id
+                            selectedShadow = it.id
+                        }
+                    }) { Text("💡", fontSize = 30.sp) }
                     Text(shadowFeedback)
                     Text("Hayvanlar", fontWeight = FontWeight.Bold)
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -369,7 +380,7 @@ private fun YonaMatchApp() {
                             if (item.id !in shadow.matched) {
                                 Surface(
                                     Modifier.weight(1f).height(90.dp).clickable { selectedShadow = item.id }.dragAndDropSource { startTransfer(DragAndDropTransferData(ClipData.newPlainText("shadow-id", item.id))) },
-                                    color = if (selectedShadow == item.id) yellow else blue.copy(alpha = 0.2f),
+                                    color = if (selectedShadow == item.id || shadowHintId == item.id) yellow else blue.copy(alpha = 0.2f),
                                     shape = RoundedCornerShape(16.dp)
                                 ) { Box(contentAlignment = Alignment.Center) { Text(item.emoji, fontSize = 40.sp) } }
                             }
@@ -387,7 +398,7 @@ private fun YonaMatchApp() {
                                         shadowMatches = shadow.matched.size
                                         shadowFeedback = if (success) "Harika, doğru eşleşme!" else "Tekrar deneyelim!"
                                         selectedShadow = null
-                                        if (shadow.isComplete) { shadowUnlocked = maxOf(shadowUnlocked, (level + 1).coerceAtMost(20)); shadowPrefs.edit().putInt("unlocked", shadowUnlocked).apply(); resultStars = gameProgress.finish("shadow", level, shadow.attempts, shadowLevels[level - 1].idealAttempts); page = "result" }
+                                        if (shadow.isComplete) { shadowUnlocked = maxOf(shadowUnlocked, (level + 1).coerceAtMost(20)); shadowPrefs.edit().putInt("unlocked", shadowUnlocked).apply(); resultStars = gameProgress.finish("shadow", level, shadow.attempts, shadowLevels[level - 1].idealAttempts, hintsUsed = shadowHintUsed); page = "result" }
                                         return true
                                     }
                                 } }).clickable(enabled = selectedShadow != null && item.id !in shadow.matched) {
