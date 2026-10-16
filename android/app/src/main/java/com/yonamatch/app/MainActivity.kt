@@ -1,6 +1,9 @@
 package com.yonamatch.app
 
 import android.os.Bundle
+import com.yonamatch.app.data.LevelRepository
+import com.yonamatch.app.data.ProgressRepository
+import androidx.compose.ui.platform.LocalContext
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
@@ -44,20 +47,22 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun YonaMatchApp() {
+    val context = LocalContext.current
+    val levels = remember(context) { LevelRepository(context).memoryLevels() }
+    val progress = remember(context) { ProgressRepository(context) }
     var page by remember { mutableStateOf("home") }
     var selected by remember { mutableIntStateOf(0) }
     var level by remember { mutableIntStateOf(1) }
     var round by remember { mutableIntStateOf(0) }
     val cards = remember(round, level) {
-        val count = when { level <= 5 -> 3; level <= 10 -> 4; level <= 15 -> 6; else -> 8 }
+        val count = levels[level - 1].pairs
         (listOf("🦁", "🐘", "🐰", "🐼", "🐧", "🐱", "🐶", "🐻").take(count).let { it + it }).shuffled()
     }
     var opened by remember(round, level) { mutableStateOf<List<Int>>(emptyList()) }
     var matched by remember(round, level) { mutableStateOf<Set<Int>>(emptySet()) }
     var attempts by remember(round, level) { mutableIntStateOf(0) }
     var mismatch by remember(round, level) { mutableStateOf(false) }
-    val prefs = androidx.compose.ui.platform.LocalContext.current.getSharedPreferences("yonamatch", 0)
-    var unlocked by remember { mutableIntStateOf(prefs.getInt("memory_unlocked", 1)) }
+    var unlocked by remember { mutableIntStateOf(progress.unlocked()) }
     LaunchedEffect(mismatch) {
         if (mismatch) {
             kotlinx.coroutines.delay(900)
@@ -70,8 +75,9 @@ private fun YonaMatchApp() {
             val next = (level + 1).coerceAtMost(20)
             if (next > unlocked) {
                 unlocked = next
-                prefs.edit().putInt("memory_unlocked", next).apply()
+                progress.finish(level, if (attempts <= levels[level - 1].idealAttempts) 3 else 2)
             }
+            progress.finish(level, if (attempts <= levels[level - 1].idealAttempts) 3 else 2)
             page = "result"
         }
     }
@@ -151,7 +157,7 @@ private fun YonaMatchApp() {
                 Spacer(Modifier.height(30.dp))
                 Text("🎉", fontSize = 78.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 Text("Harika! Bölümü tamamladın!", fontSize = 26.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                Text("⭐  ⭐  ⭐", fontSize = 36.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                Text("⭐".repeat(if (attempts <= levels[level - 1].idealAttempts) 3 else 2), fontSize = 36.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 Text("Deneme sayısı: $attempts", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 Button(onClick = { level = (level + 1).coerceAtMost(20); round++; page = "game" }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = mint)) { Text("Sonraki Bölüm", color = navy) }
                 OutlinedButton(onClick = { page = "levels" }, modifier = Modifier.fillMaxWidth()) { Text("Seviye Haritası") }
