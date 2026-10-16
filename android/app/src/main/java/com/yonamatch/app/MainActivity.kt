@@ -1,6 +1,7 @@
 package com.yonamatch.app
 
 import android.os.Bundle
+import com.yonamatch.app.data.ShadowLevelRepository
 import com.yonamatch.app.data.ShadowGame
 import com.yonamatch.app.data.ShadowItem
 import com.yonamatch.app.data.LevelRepository
@@ -9,6 +10,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
+import androidx.compose.ui.draganddrop.dragAndDropSource
+import androidx.compose.ui.draganddrop.dragAndDropTarget
+import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.toAndroidDragEvent
+import android.content.ClipData
+import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -68,8 +76,8 @@ private fun YonaMatchApp() {
     val shadowPrefs = remember(context) { context.getSharedPreferences("yonamatch_shadow", 0) }
     var shadowUnlocked by remember { mutableIntStateOf(shadowPrefs.getInt("unlocked", 1)) }
     var shadowRound by remember { mutableIntStateOf(0) }
-    val shadowCatalog = listOf(ShadowItem("lion","🦁","Aslan"), ShadowItem("elephant","🐘","Fil"), ShadowItem("rabbit","🐰","Tavşan"), ShadowItem("cat","🐱","Kedi"), ShadowItem("dog","🐶","Köpek"), ShadowItem("bear","🐻","Ayı"), ShadowItem("penguin","🐧","Penguen"), ShadowItem("panda","🐼","Panda"))
-    val shadow = remember(shadowRound, level) { ShadowGame(shadowCatalog.take(when { level <= 5 -> 3; level <= 10 -> 4; level <= 15 -> 5; else -> 6 })) }
+    val shadowLevels = remember(context) { ShadowLevelRepository(context).levels() }
+    val shadow = remember(shadowRound, level) { ShadowGame(shadowLevels[level - 1].items) }
     var selectedShadow by remember(shadowRound) { mutableStateOf<String?>(null) }
     var shadowMatches by remember(shadowRound) { mutableIntStateOf(0) }
     var shadowFeedback by remember(shadowRound) { mutableStateOf("Önce hayvanı, sonra gölgesini seç.") }
@@ -146,7 +154,7 @@ private fun YonaMatchApp() {
                         shadow.items.forEach { item ->
                             if (item.id !in shadow.matched) {
                                 Surface(
-                                    Modifier.weight(1f).height(90.dp).clickable { selectedShadow = item.id },
+                                    Modifier.weight(1f).height(90.dp).clickable { selectedShadow = item.id }.dragAndDropSource { startTransfer(DragAndDropTransferData(ClipData.newPlainText("shadow-id", item.id))) },
                                     color = if (selectedShadow == item.id) yellow else blue.copy(alpha = 0.2f),
                                     shape = RoundedCornerShape(16.dp)
                                 ) { Box(contentAlignment = Alignment.Center) { Text(item.emoji, fontSize = 40.sp) } }
@@ -157,7 +165,18 @@ private fun YonaMatchApp() {
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         shadow.targets.forEach { item ->
                             Surface(
-                                Modifier.weight(1f).height(90.dp).clickable(enabled = selectedShadow != null && item.id !in shadow.matched) {
+                                Modifier.weight(1f).height(90.dp).dragAndDropTarget(shouldStartDragAndDrop = { true }, target = remember(item.id, shadowRound, level) { object : DragAndDropTarget {
+                                    override fun onDrop(event: DragAndDropEvent): Boolean {
+                                        val clip = event.toAndroidDragEvent().clipData
+                                        val source = clip?.getItemAt(0)?.text?.toString() ?: return false
+                                        val success = shadow.match(source, item.id)
+                                        shadowMatches = shadow.matched.size
+                                        shadowFeedback = if (success) "Harika, doğru eşleşme!" else "Tekrar deneyelim!"
+                                        selectedShadow = null
+                                        if (shadow.isComplete) { shadowUnlocked = maxOf(shadowUnlocked, (level + 1).coerceAtMost(20)); shadowPrefs.edit().putInt("unlocked", shadowUnlocked).apply(); page = "result" }
+                                        return true
+                                    }
+                                } }).clickable(enabled = selectedShadow != null && item.id !in shadow.matched) {
                                     val success = shadow.match(selectedShadow!!, item.id)
                                     shadowMatches = shadow.matched.size
                                     shadowFeedback = if (success) "Harika, doğru eşleşme!" else "Tekrar deneyelim!"
