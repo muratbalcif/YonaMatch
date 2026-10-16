@@ -14,6 +14,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
@@ -240,6 +241,20 @@ private fun YonaMatchApp() {
                                 color = if (item.id in matchGame.matched) mint.copy(alpha = 0.5f) else lavender.copy(alpha = 0.2f),
                                 shape = RoundedCornerShape(14.dp)) {
                                 Box(contentAlignment = Alignment.Center) { if (item.id in matchGame.matched) Text("✓", fontSize = 32.sp) else if (selected == 4) HalfVisual(item, left = false) else MatchVisual(item, selected == 3, faded = selected == 2) }
+                            }
+                        }
+                    }
+                    if (selected == 4) {
+                        AnimatedVisibility(visible = matchCount > 0) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("✨", fontSize = 28.sp)
+                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    matchGame.items.filter { it.id in matchGame.matched }.forEach { solved ->
+                                        Surface(color = mint.copy(alpha = 0.3f), shape = RoundedCornerShape(18.dp)) {
+                                            Text(solved.symbol, fontSize = 38.sp, modifier = Modifier.padding(10.dp))
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
