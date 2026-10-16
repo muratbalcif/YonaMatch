@@ -1,6 +1,8 @@
 package com.yonamatch.app
 
 import android.os.Bundle
+import com.yonamatch.app.data.ShadowGame
+import com.yonamatch.app.data.ShadowItem
 import com.yonamatch.app.data.LevelRepository
 import com.yonamatch.app.data.ProgressRepository
 import androidx.compose.ui.platform.LocalContext
@@ -63,6 +65,14 @@ private fun YonaMatchApp() {
     var attempts by remember(round, level) { mutableIntStateOf(0) }
     var mismatch by remember(round, level) { mutableStateOf(false) }
     var unlocked by remember { mutableIntStateOf(progress.unlocked()) }
+    var shadowRound by remember { mutableIntStateOf(0) }
+    val shadow = remember(shadowRound) { ShadowGame(listOf(
+        ShadowItem("lion", "🦁", "Aslan"), ShadowItem("elephant", "🐘", "Fil"),
+        ShadowItem("rabbit", "🐰", "Tavşan")
+    )) }
+    var selectedShadow by remember(shadowRound) { mutableStateOf<String?>(null) }
+    var shadowMatches by remember(shadowRound) { mutableIntStateOf(0) }
+    var shadowFeedback by remember(shadowRound) { mutableStateOf("Önce hayvanı, sonra gölgesini seç.") }
     LaunchedEffect(mismatch) {
         if (mismatch) {
             kotlinx.coroutines.delay(900)
@@ -107,27 +117,61 @@ private fun YonaMatchApp() {
             }
             "levels" -> {
                 Text(modes[selected].emoji + " " + modes[selected].title, fontSize = 23.sp, fontWeight = FontWeight.Bold)
-                if (selected != 0) {
+                if (selected > 1) {
                     Text("Bu oyun yakında hazır olacak. Şimdilik Hafıza Kartları'nı oynayabilirsin.", color = navy)
                     Button(onClick = { selected = 0 }) { Text("Hafıza Kartları") }
                 } else {
                     Text("Bir bölüm seç", color = navy)
                     LazyVerticalGrid(columns = GridCells.Fixed(4), modifier = Modifier.height(450.dp), userScrollEnabled = false,
                         horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        items(20) { index ->
+                        items(if (selected == 1) 1 else 20) { index ->
                             val n = index + 1
                             Surface(
-                                modifier = Modifier.aspectRatio(1f).clickable(enabled = n <= unlocked) { level = n; round++; page = "game" },
-                                color = if (n <= unlocked) yellow.copy(alpha = 0.35f) else Color.LightGray.copy(alpha = 0.25f),
+                                modifier = Modifier.aspectRatio(1f).clickable(enabled = selected == 1 || n <= unlocked) { level = n; if (selected == 1) shadowRound++ else round++; page = "game" },
+                                color = if (selected == 1 || n <= unlocked) yellow.copy(alpha = 0.35f) else Color.LightGray.copy(alpha = 0.25f),
                                 shape = RoundedCornerShape(16.dp)
                             ) {
-                                Box(contentAlignment = Alignment.Center) { Text(if (n <= unlocked) "$n ⭐" else "🔒", fontSize = 18.sp) }
+                                Box(contentAlignment = Alignment.Center) { Text(if (selected == 1 || n <= unlocked) "$n ⭐" else "🔒", fontSize = 18.sp) }
                             }
                         }
                     }
                 }
             }
             "game" -> {
+                if (selected == 1) {
+                    Text("🐘 Gölgesini Bul", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    Text(shadowFeedback)
+                    Text("Hayvanlar", fontWeight = FontWeight.Bold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        shadow.items.forEach { item ->
+                            if (item.id !in shadow.matched) {
+                                Surface(
+                                    Modifier.weight(1f).height(90.dp).clickable { selectedShadow = item.id },
+                                    color = if (selectedShadow == item.id) yellow else blue.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) { Box(contentAlignment = Alignment.Center) { Text(item.emoji, fontSize = 40.sp) } }
+                            }
+                        }
+                    }
+                    Text("Gölgesini seç", fontWeight = FontWeight.Bold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        shadow.targets.forEach { item ->
+                            Surface(
+                                Modifier.weight(1f).height(90.dp).clickable(enabled = selectedShadow != null && item.id !in shadow.matched) {
+                                    val success = shadow.match(selectedShadow!!, item.id)
+                                    shadowMatches = shadow.matched.size
+                                    shadowFeedback = if (success) "Harika, doğru eşleşme!" else "Tekrar deneyelim!"
+                                    selectedShadow = null
+                                    if (shadow.isComplete) page = "result"
+                                },
+                                color = if (item.id in shadow.matched) mint.copy(alpha = 0.4f) else lavender.copy(alpha = 0.25f),
+                                shape = RoundedCornerShape(16.dp)
+                            ) { Box(contentAlignment = Alignment.Center) { Text(if (item.id in shadow.matched) "✓" else item.emoji, fontSize = 40.sp, color = navy.copy(alpha = 0.25f)) } }
+                        }
+                    }
+                    Text("Eşleşen: $shadowMatches/3 · Deneme: ${shadow.attempts}")
+                    TextButton(onClick = { shadowRound++ }) { Text("Yeniden Başlat") }
+                } else {
                 Text("Hafıza Kartları · Bölüm $level", fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 Text("Çiftleri bul!  ·  Deneme: $attempts  ·  ${matched.size / 2}/${cards.size / 2}")
                 val rows = (cards.size + 3) / 4
@@ -152,14 +196,15 @@ private fun YonaMatchApp() {
                     }
                 }
                 TextButton(onClick = { round++ }) { Text("Yeniden Başlat") }
+                }
             }
             "result" -> {
                 Spacer(Modifier.height(30.dp))
                 Text("🎉", fontSize = 78.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 Text("Harika! Bölümü tamamladın!", fontSize = 26.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                Text("⭐".repeat(if (attempts <= levels[level - 1].idealAttempts) 3 else 2), fontSize = 36.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-                Text("Deneme sayısı: $attempts", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-                Button(onClick = { level = (level + 1).coerceAtMost(20); round++; page = "game" }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = mint)) { Text("Sonraki Bölüm", color = navy) }
+                Text("⭐".repeat(if (selected == 1) 3 else if (attempts <= levels[level - 1].idealAttempts) 3 else 2), fontSize = 36.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                Text("Deneme sayısı: ${if (selected == 1) shadow.attempts else attempts}", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                Button(onClick = { if (selected == 1) shadowRound++ else { level = (level + 1).coerceAtMost(20); round++ }; page = "game" }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = mint)) { Text(if (selected == 1) "Tekrar Oyna" else "Sonraki Bölüm", color = navy) }
                 OutlinedButton(onClick = { page = "levels" }, modifier = Modifier.fillMaxWidth()) { Text("Seviye Haritası") }
             }
         }
