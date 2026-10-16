@@ -44,6 +44,24 @@ private val yellow = Color(0xFFFFC857)
 private val coral = Color(0xFFFF8FA3)
 private val lavender = Color(0xFFB79CFF)
 
+private fun matchColor(id: String): Color = when (id) {
+    "red" -> Color(0xFFEF4444)
+    "blue" -> Color(0xFF3B82F6)
+    "green" -> Color(0xFF22C55E)
+    "yellow" -> Color(0xFFFACC15)
+    "purple" -> Color(0xFFA855F7)
+    else -> Color.Gray
+}
+
+@Composable
+private fun MatchVisual(item: MatchItem, isColor: Boolean, faded: Boolean = false) {
+    if (isColor) {
+        Box(Modifier.size(42.dp).background(matchColor(item.id).copy(alpha = if (faded) 0.25f else 1f), androidx.compose.foundation.shape.CircleShape))
+    } else {
+        Text(item.symbol, fontSize = 38.sp, color = navy.copy(alpha = if (faded) 0.22f else 1f))
+    }
+}
+
 private data class Mode(val title: String, val emoji: String, val tint: Color)
 private val modes = listOf(
     Mode("Hafıza Kartları", "🦁", yellow),
@@ -120,9 +138,9 @@ private fun YonaMatchApp() {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (page != "home") TextButton(onClick = { page = when(page) { "game", "result" -> "levels"; else -> "home" } }) { Text("‹ Geri", color = navy) }
+            if (page != "home") TextButton(onClick = { page = when(page) { "game", "result" -> "levels"; else -> "home" } }) { Text(if (page == "game" && selected in 2..3) "‹" else "‹ Geri", color = navy, fontSize = if (page == "game" && selected in 2..3) 30.sp else 16.sp) }
             Spacer(Modifier.weight(1f))
-            Text("🧩 YonaMatch", fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = navy)
+            if (page != "game" || selected !in 2..3) Text("🧩 YonaMatch", fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = navy)
             Spacer(Modifier.weight(1f))
         }
         when (page) {
@@ -173,7 +191,7 @@ private fun YonaMatchApp() {
                                     .dragAndDropSource { startTransfer(DragAndDropTransferData(ClipData.newPlainText("match-id", item.id))) },
                                     color = if (matchSelection == item.id) yellow else mint.copy(alpha = 0.2f),
                                     shape = RoundedCornerShape(14.dp)) {
-                                    Box(contentAlignment = Alignment.Center) { Text(item.symbol, fontSize = 28.sp) }
+                                    Box(contentAlignment = Alignment.Center) { MatchVisual(item, selected == 3) }
                                 }
                             }
                         }
@@ -205,7 +223,7 @@ private fun YonaMatchApp() {
                                 .clickable(enabled = matchSelection != null && item.id !in matchGame.matched) { completeMatch(matchSelection!!) },
                                 color = if (item.id in matchGame.matched) mint.copy(alpha = 0.5f) else lavender.copy(alpha = 0.2f),
                                 shape = RoundedCornerShape(14.dp)) {
-                                Box(contentAlignment = Alignment.Center) { Text(if (item.id in matchGame.matched) "✓" else item.symbol, fontSize = 30.sp, color = if (selected == 2 && item.id !in matchGame.matched) navy.copy(alpha = 0.22f) else navy) }
+                                Box(contentAlignment = Alignment.Center) { if (item.id in matchGame.matched) Text("✓", fontSize = 32.sp) else MatchVisual(item, selected == 3, faded = selected == 2) }
                             }
                         }
                     }
