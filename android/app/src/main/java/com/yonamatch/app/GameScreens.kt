@@ -98,3 +98,96 @@ fun AssociationGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> 
         if (revision > 0) Text("⭐ ${completed.size}/${game.items.size}", fontSize = 22.sp)
     }
 }
+
+/** Shared matching mechanics; each mode has its own screen entry and isolated round. */
+@Composable
+private fun PairMatchingScreen(
+    mode: Int,
+    level: Int,
+    round: Int,
+    onComplete: (Int, Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    val type = when (mode) { 2 -> "shape"; 3 -> "color"; else -> "halves" }
+    val levelData = remember(context, type, level) {
+        com.yonamatch.app.data.MatchLevelRepository(context).levels(type)[level - 1]
+    }
+    val game = remember(type, level, round) { MatchGame(levelData.items) }
+    var selection by remember(type, level, round) { mutableStateOf<String?>(null) }
+    var hintUsed by remember(type, level, round) { mutableStateOf(false) }
+    var revision by remember(type, level, round) { mutableIntStateOf(0) }
+    var wrongTarget by remember(type, level, round) { mutableStateOf<String?>(null) }
+    val completed = game.matched.toSet()
+    fun submit(source: String, target: String) {
+        if (game.complete) return
+        val correct = game.match(source, target)
+        revision++
+        wrongTarget = if (correct) null else target
+        selection = null
+        if (game.complete) onComplete(game.attempts, hintUsed)
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(when (mode) { 2 -> "🔺"; 3 -> "🎨"; else -> "🧩" }, fontSize = 32.sp)
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = {
+                selection = game.items.firstOrNull { it.id !in completed }?.id
+                if (selection != null) hintUsed = true
+            }) { Text("💡", fontSize = 34.sp) }
+        }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            listOf(false, true).forEach { isTarget ->
+                val entries = if (isTarget) game.targets else game.items
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(if (entries.size <= 3) 1 else 2),
+                    modifier = Modifier.weight(1f).height(if (entries.size <= 3) 354.dp else if (entries.size <= 4) 228.dp else 342.dp),
+                    userScrollEnabled = false,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(entries, key = { it.id }) { item ->
+                        val solved = item.id in completed
+                        Surface(
+                            modifier = Modifier.fillMaxWidth().height(110.dp).clickable(
+                                enabled = !solved && (!isTarget || selection != null)
+                            ) {
+                                if (isTarget) selection?.let { submit(it, item.id) }
+                                else selection = item.id
+                            },
+                            color = if (solved) Color(0xFFBDEDD7) else if (isTarget && wrongTarget == item.id) Color(0xFFFFD6DC)
+                                else if (!isTarget && selection == item.id) Color(0xFFFFE4A0)
+                                else if (isTarget) Color(0xFFECE6FF) else Color(0xFFE0F7EC),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                if (solved) Text("✓", fontSize = 42.sp)
+                                else if (mode == 3) {
+                                    val shade = when (item.id) {
+                                        "red" -> Color.Red; "blue" -> Color.Blue; "green" -> Color.Green
+                                        "yellow" -> Color.Yellow; "purple" -> Color.Magenta
+                                        "orange" -> Color(0xFFFF9800); "pink" -> Color(0xFFFF69B4)
+                                        else -> Color.Gray
+                                    }
+                                    Box(Modifier.size(54.dp).background(shade, androidx.compose.foundation.shape.CircleShape))
+                                } else {
+                                    Text(item.symbol, fontSize = 46.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (wrongTarget != null) Text("↻", fontSize = 28.sp, color = Color(0xFFCC4455))
+        if (revision > 0) Text("⭐ ${completed.size}/${game.items.size}", fontSize = 22.sp)
+    }
+}
+
+@Composable fun ShapeGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit) =
+    PairMatchingScreen(2, level, round, onComplete)
+
+@Composable fun ColorGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit) =
+    PairMatchingScreen(3, level, round, onComplete)
+
+@Composable fun HalvesGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit) =
+    PairMatchingScreen(4, level, round, onComplete)
