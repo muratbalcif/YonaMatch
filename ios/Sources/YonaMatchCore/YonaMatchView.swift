@@ -274,7 +274,8 @@ public struct YonaMatchView: View {
         matchSelection = nil
         if matchGame.complete {
             if selected == 2 { shapeUnlocked = max(shapeUnlocked, min(20, level + 1)) }
-            else { colorUnlocked = max(colorUnlocked, min(20, level + 1)) }
+            else if selected == 3 { colorUnlocked = max(colorUnlocked, min(20, level + 1)) }
+            else if selected == 4 { halvesUnlocked = max(halvesUnlocked, min(20, level + 1)) }
             page = .result
         }
     }
