@@ -161,7 +161,9 @@ private fun PairMatchingScreen(
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 if (solved) Text("✓", fontSize = 42.sp)
-                                else if (mode == 3) {
+                                else if (mode == 4) {
+                                    HalfVisual(item, left = !isTarget)
+                                } else if (mode == 3) {
                                     val shade = when (item.id) {
                                         "red" -> Color.Red; "blue" -> Color.Blue; "green" -> Color.Green
                                         "yellow" -> Color.Yellow; "purple" -> Color.Magenta
