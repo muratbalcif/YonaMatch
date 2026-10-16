@@ -227,6 +227,24 @@ public struct YonaMatchView: View {
                                 }
                             }
                         }
+                        if selected == 5 && !matchGame.matched.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("✨").font(.system(size: 28))
+                                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 2), spacing: 10) {
+                                    ForEach(matchGame.items.filter { matchGame.matched.contains($0.id) }) { solved in
+                                        HStack(spacing: 3) {
+                                            Text(solved.symbol).font(.system(size: 30))
+                                            Text("💚").font(.system(size: 17))
+                                            Text(associationTargets[solved.id]?.symbol ?? "").font(.system(size: 30))
+                                        }
+                                        .frame(maxWidth: .infinity, minHeight: 76)
+                                        .background(Color.mint.opacity(0.25), in: RoundedRectangle(cornerRadius: 18))
+                                        .transition(.scale.combined(with: .opacity))
+                                    }
+                                }
+                            }
+                            .animation(.spring(response: 0.35, dampingFraction: 0.65), value: matchGame.matched.count)
+                        }
                         if selected == 4 && !matchGame.matched.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("✨").font(.system(size: 28))
