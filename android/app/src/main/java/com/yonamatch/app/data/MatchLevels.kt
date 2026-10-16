@@ -7,7 +7,7 @@ data class MatchLevel(val order: Int, val items: List<MatchItem>, val idealAttem
 
 class MatchLevelRepository(private val context: Context) {
     fun levels(gameType: String): List<MatchLevel> {
-        require(gameType == "shape" || gameType == "color")
+        require(gameType == "shape" || gameType == "color" || gameType == "halves")
         val raw = context.assets.open("levels/$gameType.json").bufferedReader().use { it.readText() }
         val root = JSONObject(raw)
         require(root.getInt("schemaVersion") == 1 && root.getString("gameType") == gameType)
