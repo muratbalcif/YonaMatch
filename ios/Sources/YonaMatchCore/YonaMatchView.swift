@@ -184,7 +184,7 @@ public struct YonaMatchView: View {
                                     if selected == 1 { resetShadow() } else if selected >= 2 && selected <= 5 { resetMatching() } else { game = makeGame() }
                                     page = .game
                                 } label: {
-                                    Text(n <= (unlockedLevel(for: selected)) ? "\(n) ⭐" : "🔒")
+                                    Text(n <= unlockedLevel(for: selected) ? "\(n)" + (gameProgress.bestStars(["memory", "shadow", "shape", "color", "halves", "association"][selected], level: n) > 0 ? " " + String(repeating: "⭐", count: gameProgress.bestStars(["memory", "shadow", "shape", "color", "halves", "association"][selected], level: n)) : "") : "🔒")
                                         .frame(maxWidth: .infinity, minHeight: 65)
                                         .background((n <= (unlockedLevel(for: selected))) ? Color.yellow.opacity(0.3) : Color.gray.opacity(0.14),
                                                     in: RoundedRectangle(cornerRadius: 16))
