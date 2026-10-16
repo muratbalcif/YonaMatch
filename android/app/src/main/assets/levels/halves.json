@@ -1,1 +1,273 @@
-{"schemaVersion":1,"gameType":"halves","catalog":[{"id":"apple","symbol":"🍎","label":"Elma"},{"id":"butterfly","symbol":"🦋","label":"Kelebek"},{"id":"fish","symbol":"🐟","label":"Balık"},{"id":"car","symbol":"🚗","label":"Araba"},{"id":"house","symbol":"🏠","label":"Ev"},{"id":"flower","symbol":"🌻","label":"Çiçek"},{"id":"rocket","symbol":"🚀","label":"Roket"},{"id":"turtle","symbol":"🐢","label":"Kaplumbağa"}],"levels":[{"id":"halves-001","order":1,"items":["apple","butterfly","fish"],"idealAttempts":3},{"id":"halves-002","order":2,"items":["apple","butterfly","fish"],"idealAttempts":3},{"id":"halves-003","order":3,"items":["apple","butterfly","fish"],"idealAttempts":3},{"id":"halves-004","order":4,"items":["apple","butterfly","fish"],"idealAttempts":3},{"id":"halves-005","order":5,"items":["apple","butterfly","fish"],"idealAttempts":3},{"id":"halves-006","order":6,"items":["butterfly","fish","car","house"],"idealAttempts":4},{"id":"halves-007","order":7,"items":["butterfly","fish","car","house"],"idealAttempts":4},{"id":"halves-008","order":8,"items":["butterfly","fish","car","house"],"idealAttempts":4},{"id":"halves-009","order":9,"items":["butterfly","fish","car","house"],"idealAttempts":4},{"id":"halves-010","order":10,"items":["butterfly","fish","car","house"],"idealAttempts":4},{"id":"halves-011","order":11,"items":["fish","car","house","flower","rocket"],"idealAttempts":5},{"id":"halves-012","order":12,"items":["fish","car","house","flower","rocket"],"idealAttempts":5},{"id":"halves-013","order":13,"items":["fish","car","house","flower","rocket"],"idealAttempts":5},{"id":"halves-014","order":14,"items":["fish","car","house","flower","rocket"],"idealAttempts":5},{"id":"halves-015","order":15,"items":["fish","car","house","flower","rocket"],"idealAttempts":5},{"id":"halves-016","order":16,"items":["car","house","flower","rocket","turtle"],"idealAttempts":6},{"id":"halves-017","order":17,"items":["car","house","flower","rocket","turtle"],"idealAttempts":6},{"id":"halves-018","order":18,"items":["car","house","flower","rocket","turtle"],"idealAttempts":6},{"id":"halves-019","order":19,"items":["car","house","flower","rocket","turtle"],"idealAttempts":6},{"id":"halves-020","order":20,"items":["car","house","flower","rocket","turtle"],"idealAttempts":6}]}
+{
+  "schemaVersion": 1,
+  "gameType": "halves",
+  "catalog": [
+    {
+      "id": "apple",
+      "symbol": "🍎",
+      "label": "Elma"
+    },
+    {
+      "id": "butterfly",
+      "symbol": "🦋",
+      "label": "Kelebek"
+    },
+    {
+      "id": "fish",
+      "symbol": "🐟",
+      "label": "Balık"
+    },
+    {
+      "id": "car",
+      "symbol": "🚗",
+      "label": "Araba"
+    },
+    {
+      "id": "house",
+      "symbol": "🏠",
+      "label": "Ev"
+    },
+    {
+      "id": "flower",
+      "symbol": "🌻",
+      "label": "Çiçek"
+    },
+    {
+      "id": "rocket",
+      "symbol": "🚀",
+      "label": "Roket"
+    },
+    {
+      "id": "turtle",
+      "symbol": "🐢",
+      "label": "Kaplumbağa"
+    }
+  ],
+  "levels": [
+    {
+      "id": "halves-001",
+      "order": 1,
+      "items": [
+        "apple",
+        "butterfly",
+        "fish"
+      ],
+      "idealAttempts": 3
+    },
+    {
+      "id": "halves-002",
+      "order": 2,
+      "items": [
+        "apple",
+        "butterfly",
+        "fish"
+      ],
+      "idealAttempts": 3
+    },
+    {
+      "id": "halves-003",
+      "order": 3,
+      "items": [
+        "apple",
+        "butterfly",
+        "fish"
+      ],
+      "idealAttempts": 3
+    },
+    {
+      "id": "halves-004",
+      "order": 4,
+      "items": [
+        "apple",
+        "butterfly",
+        "fish"
+      ],
+      "idealAttempts": 3
+    },
+    {
+      "id": "halves-005",
+      "order": 5,
+      "items": [
+        "apple",
+        "butterfly",
+        "fish"
+      ],
+      "idealAttempts": 3
+    },
+    {
+      "id": "halves-006",
+      "order": 6,
+      "items": [
+        "butterfly",
+        "fish",
+        "car",
+        "house"
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "halves-007",
+      "order": 7,
+      "items": [
+        "butterfly",
+        "fish",
+        "car",
+        "house"
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "halves-008",
+      "order": 8,
+      "items": [
+        "butterfly",
+        "fish",
+        "car",
+        "house"
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "halves-009",
+      "order": 9,
+      "items": [
+        "butterfly",
+        "fish",
+        "car",
+        "house"
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "halves-010",
+      "order": 10,
+      "items": [
+        "butterfly",
+        "fish",
+        "car",
+        "house"
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "halves-011",
+      "order": 11,
+      "items": [
+        "fish",
+        "car",
+        "house",
+        "flower",
+        "rocket"
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "halves-012",
+      "order": 12,
+      "items": [
+        "fish",
+        "car",
+        "house",
+        "flower",
+        "rocket"
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "halves-013",
+      "order": 13,
+      "items": [
+        "fish",
+        "car",
+        "house",
+        "flower",
+        "rocket"
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "halves-014",
+      "order": 14,
+      "items": [
+        "fish",
+        "car",
+        "house",
+        "flower",
+        "rocket"
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "halves-015",
+      "order": 15,
+      "items": [
+        "fish",
+        "car",
+        "house",
+        "flower",
+        "rocket"
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "halves-016",
+      "order": 16,
+      "items": [
+        "car",
+        "house",
+        "flower",
+        "rocket",
+        "turtle"
+      ],
+      "idealAttempts": 6
+    },
+    {
+      "id": "halves-017",
+      "order": 17,
+      "items": [
+        "car",
+        "house",
+        "flower",
+        "rocket",
+        "turtle"
+      ],
+      "idealAttempts": 6
+    },
+    {
+      "id": "halves-018",
+      "order": 18,
+      "items": [
+        "car",
+        "house",
+        "flower",
+        "rocket",
+        "turtle"
+      ],
+      "idealAttempts": 6
+    },
+    {
+      "id": "halves-019",
+      "order": 19,
+      "items": [
+        "car",
+        "house",
+        "flower",
+        "rocket",
+        "turtle"
+      ],
+      "idealAttempts": 6
+    },
+    {
+      "id": "halves-020",
+      "order": 20,
+      "items": [
+        "car",
+        "house",
+        "flower",
+        "rocket",
+        "turtle"
+      ],
+      "idealAttempts": 6
+    }
+  ]
+}

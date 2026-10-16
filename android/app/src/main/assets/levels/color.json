@@ -1,1 +1,256 @@
-{"schemaVersion":1,"gameType":"color","catalog":[{"id":"red","symbol":"🔴","label":"Kırmızı"},{"id":"blue","symbol":"🔵","label":"Mavi"},{"id":"green","symbol":"🟢","label":"Yeşil"},{"id":"yellow","symbol":"🟡","label":"Sarı"},{"id":"purple","symbol":"🟣","label":"Mor"}],"levels":[{"id":"color-001","order":1,"items":["red","blue","green"],"idealAttempts":3},{"id":"color-002","order":2,"items":["red","blue","green"],"idealAttempts":3},{"id":"color-003","order":3,"items":["red","blue","green"],"idealAttempts":3},{"id":"color-004","order":4,"items":["red","blue","green"],"idealAttempts":3},{"id":"color-005","order":5,"items":["red","blue","green"],"idealAttempts":3},{"id":"color-006","order":6,"items":["red","blue","green","yellow"],"idealAttempts":4},{"id":"color-007","order":7,"items":["red","blue","green","yellow"],"idealAttempts":4},{"id":"color-008","order":8,"items":["red","blue","green","yellow"],"idealAttempts":4},{"id":"color-009","order":9,"items":["red","blue","green","yellow"],"idealAttempts":4},{"id":"color-010","order":10,"items":["red","blue","green","yellow"],"idealAttempts":4},{"id":"color-011","order":11,"items":["red","blue","green","yellow"],"idealAttempts":4},{"id":"color-012","order":12,"items":["red","blue","green","yellow"],"idealAttempts":4},{"id":"color-013","order":13,"items":["red","blue","green","yellow","purple"],"idealAttempts":5},{"id":"color-014","order":14,"items":["red","blue","green","yellow","purple"],"idealAttempts":5},{"id":"color-015","order":15,"items":["red","blue","green","yellow","purple"],"idealAttempts":5},{"id":"color-016","order":16,"items":["red","blue","green","yellow","purple"],"idealAttempts":5},{"id":"color-017","order":17,"items":["red","blue","green","yellow","purple"],"idealAttempts":5},{"id":"color-018","order":18,"items":["red","blue","green","yellow","purple"],"idealAttempts":5},{"id":"color-019","order":19,"items":["red","blue","green","yellow","purple"],"idealAttempts":5},{"id":"color-020","order":20,"items":["red","blue","green","yellow","purple"],"idealAttempts":5}]}
+{
+  "schemaVersion": 1,
+  "gameType": "color",
+  "catalog": [
+    {
+      "id": "red",
+      "symbol": "🔴",
+      "label": "Kırmızı"
+    },
+    {
+      "id": "blue",
+      "symbol": "🔵",
+      "label": "Mavi"
+    },
+    {
+      "id": "green",
+      "symbol": "🟢",
+      "label": "Yeşil"
+    },
+    {
+      "id": "yellow",
+      "symbol": "🟡",
+      "label": "Sarı"
+    },
+    {
+      "id": "purple",
+      "symbol": "🟣",
+      "label": "Mor"
+    }
+  ],
+  "levels": [
+    {
+      "id": "color-001",
+      "order": 1,
+      "items": [
+        "red",
+        "blue",
+        "green"
+      ],
+      "idealAttempts": 3
+    },
+    {
+      "id": "color-002",
+      "order": 2,
+      "items": [
+        "red",
+        "blue",
+        "green"
+      ],
+      "idealAttempts": 3
+    },
+    {
+      "id": "color-003",
+      "order": 3,
+      "items": [
+        "red",
+        "blue",
+        "green"
+      ],
+      "idealAttempts": 3
+    },
+    {
+      "id": "color-004",
+      "order": 4,
+      "items": [
+        "red",
+        "blue",
+        "green"
+      ],
+      "idealAttempts": 3
+    },
+    {
+      "id": "color-005",
+      "order": 5,
+      "items": [
+        "red",
+        "blue",
+        "green"
+      ],
+      "idealAttempts": 3
+    },
+    {
+      "id": "color-006",
+      "order": 6,
+      "items": [
+        "red",
+        "blue",
+        "green",
+        "yellow"
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "color-007",
+      "order": 7,
+      "items": [
+        "red",
+        "blue",
+        "green",
+        "yellow"
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "color-008",
+      "order": 8,
+      "items": [
+        "red",
+        "blue",
+        "green",
+        "yellow"
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "color-009",
+      "order": 9,
+      "items": [
+        "red",
+        "blue",
+        "green",
+        "yellow"
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "color-010",
+      "order": 10,
+      "items": [
+        "red",
+        "blue",
+        "green",
+        "yellow"
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "color-011",
+      "order": 11,
+      "items": [
+        "red",
+        "blue",
+        "green",
+        "yellow"
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "color-012",
+      "order": 12,
+      "items": [
+        "red",
+        "blue",
+        "green",
+        "yellow"
+      ],
+      "idealAttempts": 4
+    },
+    {
+      "id": "color-013",
+      "order": 13,
+      "items": [
+        "red",
+        "blue",
+        "green",
+        "yellow",
+        "purple"
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "color-014",
+      "order": 14,
+      "items": [
+        "red",
+        "blue",
+        "green",
+        "yellow",
+        "purple"
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "color-015",
+      "order": 15,
+      "items": [
+        "red",
+        "blue",
+        "green",
+        "yellow",
+        "purple"
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "color-016",
+      "order": 16,
+      "items": [
+        "red",
+        "blue",
+        "green",
+        "yellow",
+        "purple"
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "color-017",
+      "order": 17,
+      "items": [
+        "red",
+        "blue",
+        "green",
+        "yellow",
+        "purple"
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "color-018",
+      "order": 18,
+      "items": [
+        "red",
+        "blue",
+        "green",
+        "yellow",
+        "purple"
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "color-019",
+      "order": 19,
+      "items": [
+        "red",
+        "blue",
+        "green",
+        "yellow",
+        "purple"
+      ],
+      "idealAttempts": 5
+    },
+    {
+      "id": "color-020",
+      "order": 20,
+      "items": [
+        "red",
+        "blue",
+        "green",
+        "yellow",
+        "purple"
+      ],
+      "idealAttempts": 5
+    }
+  ]
+}
