@@ -449,7 +449,7 @@ private fun YonaMatchApp() {
                             },
                             color = if (index in matched) mint.copy(alpha = 0.4f) else blue.copy(alpha = 0.28f),
                             shape = RoundedCornerShape(14.dp)
-                        ) { Box(contentAlignment = Alignment.Center) { AnimatedContent(targetState = visible, label = "card-flip") { isOpen -> Text(if (isOpen) symbol else "❔", fontSize = 29.sp) } } }
+                        ) { Box(contentAlignment = Alignment.Center) { AnimatedContent(targetState = visible, label = "card-flip") { isOpen -> Text(if (isOpen) symbol else "❔", fontSize = if (rows <= 2) 60.sp else if (rows == 3) 48.sp else 40.sp) } } }
                     }
                 }
                 TextButton(onClick = { round++ }) { Text("↻", fontSize = 32.sp) }
