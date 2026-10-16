@@ -6,32 +6,11 @@ public struct YonaMatchView: View {
     private let progress = ProgressRepository()
     private let gameProgress = GameProgressStore()
     @State private var resultStars = 3
-    @State private var game = MemoryGame()
-    @State private var memoryHintUsed = false
-    @State private var memoryHintPair: Set<Int> = []
-    @State private var shadowHintUsed = false
-    @State private var shadowHintId: String? = nil
-
     @AppStorage("shape_unlocked") private var shapeUnlocked = 1
     @AppStorage("color_unlocked") private var colorUnlocked = 1
     @AppStorage("halves_unlocked") private var halvesUnlocked = 1
     @AppStorage("association_unlocked") private var associationUnlocked = 1
-    @State private var associationTargets: [String: MatchItem] = [:]
-    @State private var wrongMatchTarget: String? = nil
-    @State private var wrongMatchToken = UUID()
-    @State private var matchGame = MatchGame(items: [.init(id: "circle", symbol: "●", label: "Daire")])
-    @State private var matchSelection: String? = nil
-    @State private var matchHintUsed = false
-    @State private var hintSource: String? = nil
-    @State private var matchFeedback = "Kartı ve hedefini eşleştir."
     @AppStorage("shadow_unlocked") private var shadowUnlocked = 1
-    @State private var shadow = ShadowGame(items: [
-        .init(id: "lion", emoji: "🦁", label: "Aslan"),
-        .init(id: "elephant", emoji: "🐘", label: "Fil"),
-        .init(id: "rabbit", emoji: "🐰", label: "Tavşan")
-    ])
-    @State private var selectedShadow: String? = nil
-    @State private var shadowFeedback = "Önce hayvanı, sonra gölgesini seç."
     @State private var page: Page = .home
     @State private var selected = 0
     @State private var level = 1
@@ -168,7 +147,7 @@ public struct YonaMatchView: View {
                                 VStack(spacing: 8) {
                                     Text(modes[index].1).font(.system(size: 44))
                                     Text(modes[index].0).font(.subheadline.bold()).multilineTextAlignment(.center)
-                                    if index > 4 { Text("Yakında").font(.caption) }
+                                    
                                 }
                                 .frame(maxWidth: .infinity, minHeight: 120)
                                 .foregroundStyle(navy)
@@ -187,7 +166,7 @@ public struct YonaMatchView: View {
                             ForEach(1...20, id: \.self) { n in
                                 Button {
                                     level = n
-                                    if selected == 1 { resetShadow() } else if selected >= 2 && selected <= 5 { resetMatching() } else { game = makeGame(); memoryHintUsed = false; memoryHintPair = [] }
+                                    
                                     page = .game
                                 } label: {
                                     Text(n <= unlockedLevel(for: selected) ? "\(n)" + (gameProgress.bestStars(["memory", "shadow", "shape", "color", "halves", "association"][selected], level: n) > 0 ? " " + String(repeating: "⭐", count: gameProgress.bestStars(["memory", "shadow", "shape", "color", "halves", "association"][selected], level: n)) : "") : "🔒")
@@ -248,9 +227,7 @@ public struct YonaMatchView: View {
                     .background(Color.yellow.opacity(0.2), in: RoundedRectangle(cornerRadius: 32))
                     HStack(spacing: 12) {
                         Button {
-                            if selected == 1 { resetShadow() }
-                            else if selected >= 2 && selected <= 5 { resetMatching() }
-                            else { game = makeGame(); memoryHintUsed = false; memoryHintPair = [] }
+                            
                             page = .game
                         } label: {
                             Text("↻").font(.system(size: 32))
@@ -262,9 +239,7 @@ public struct YonaMatchView: View {
                                 page = .levels
                             } else {
                                 level += 1
-                                if selected == 1 { resetShadow() }
-                                else if selected >= 2 && selected <= 5 { resetMatching() }
-                                else { game = makeGame(); memoryHintUsed = false; memoryHintPair = [] }
+                                
                                 page = .game
                             }
                         } label: {
@@ -288,67 +263,4 @@ public struct YonaMatchView: View {
         .background(cream.ignoresSafeArea())
     }
 
-    private func resetMatching() {
-        let items: [MatchItem]
-        if selected == 5 {
-            let pairs = ((try? AssociationLevelRepository.levels()) ?? []).first(where: { $0.order == level })?.pairs ?? []
-            associationTargets = Dictionary(uniqueKeysWithValues: pairs.map { ($0.source.id, $0.target) })
-            items = pairs.map { $0.source }
-        } else {
-            let type = selected == 2 ? "shape" : (selected == 3 ? "color" : "halves")
-            items = (try? MatchLevelRepository.items(type, level: level)) ?? []
-            associationTargets = [:]
-        }
-        if !items.isEmpty { matchGame = MatchGame(items: items, associationTargets: selected == 5 ? associationTargets : [:]) }
-        matchSelection = nil
-        matchHintUsed = false
-        hintSource = nil
-        wrongMatchTarget = nil
-        matchFeedback = "Kartı ve hedefini eşleştir."
-    }
-
-    private func submitMatching(source: String, target: String) {
-        let correct = matchGame.match(source: source, target: target)
-        matchFeedback = correct ? "Harika!" : "Tekrar deneyelim!"
-        if correct {
-            wrongMatchTarget = nil
-        } else {
-            wrongMatchTarget = target
-            let token = UUID()
-            wrongMatchToken = token
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
-                if wrongMatchToken == token { wrongMatchTarget = nil }
-            }
-        }
-        matchSelection = nil
-        hintSource = nil
-        if matchGame.complete {
-            let type = selected == 2 ? "shape" : (selected == 3 ? "color" : (selected == 4 ? "halves" : "association"))
-            let ideal: Int
-            if selected == 5 {
-                ideal = ((try? AssociationLevelRepository.levels()) ?? []).first(where: { $0.order == level })?.idealAttempts ?? matchGame.items.count
-            } else {
-                ideal = ((try? MatchLevelRepository.levels(type)) ?? []).first(where: { $0.order == level })?.idealAttempts ?? matchGame.items.count
-            }
-            resultStars = gameProgress.finish(type, level: level, attempts: matchGame.attempts, idealAttempts: ideal, hintsUsed: matchHintUsed)
-            if selected == 2 { shapeUnlocked = max(shapeUnlocked, min(20, level + 1)) }
-            else if selected == 3 { colorUnlocked = max(colorUnlocked, min(20, level + 1)) }
-            else if selected == 4 { halvesUnlocked = max(halvesUnlocked, min(20, level + 1)) }
-            else if selected == 5 { associationUnlocked = max(associationUnlocked, min(20, level + 1)) }
-            page = .result
-        }
-    }
-
-    private func resetShadow() {
-        shadowHintUsed = false
-        shadowHintId = nil
-        shadow = ShadowGame(items: (try? ShadowLevelRepository.items(for: level)) ?? [])
-        selectedShadow = nil
-        shadowFeedback = "Önce hayvanı, sonra gölgesini seç."
-    }
-
-    private func makeGame() -> MemoryGame {
-        let count = levels.first(where: { $0.order == level })?.pairs ?? 3
-        return MemoryGame(pairs: Array(["🦁", "🐘", "🐰", "🐼", "🐧", "🐱", "🐶", "🐻"].prefix(count)))
-    }
 }
