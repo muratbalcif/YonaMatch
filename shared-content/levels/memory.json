@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "gameType": "memory",
+  "levels": [
+    {
+      "id": "memory-001",
+      "order": 1,
+      "pairs": 3,
+      "theme": "animals",
+      "stars": {
+        "complete": 1,
+        "attemptsAtMost": 5,
+        "perfect": 3
+      }
+    },
+    {
+      "id": "memory-002",
+      "order": 2,
+      "pairs": 4,
+      "theme": "animals",
+      "stars": {
+        "complete": 1,
+        "attemptsAtMost": 8,
+        "perfect": 4
+      }
+    }
+  ]
+}
