@@ -165,6 +165,8 @@ private fun YonaMatchApp() {
     val matchGame = remember(selected, level, matchRound) { MatchGame(matchItems) }
     var matchSelection by remember(selected, level, matchRound) { mutableStateOf<String?>(null) }
     var matchCount by remember(selected, level, matchRound) { mutableIntStateOf(0) }
+    var matchHintUsed by remember(selected, level, matchRound) { mutableStateOf(false) }
+    var hintSource by remember(selected, level, matchRound) { mutableStateOf<String?>(null) }
     val matchPrefs = remember(context) { context.getSharedPreferences("yonamatch_matching", 0) }
     var shapeUnlocked by remember { mutableIntStateOf(matchPrefs.getInt("shape_unlocked", 1)) }
     var colorUnlocked by remember { mutableIntStateOf(matchPrefs.getInt("color_unlocked", 1)) }
@@ -249,14 +251,22 @@ private fun YonaMatchApp() {
                 }
             }
             "game" -> {
-                if (selected in 2..4) {
+                if (selected in 2..5) {
                     Text(when (selected) { 2 -> "🔺"; 3 -> "🎨"; 4 -> "🧩"; else -> "🔗" }, fontSize = 30.sp)
+                    TextButton(onClick = {
+                        val source = matchGame.items.firstOrNull { it.id !in matchGame.matched }
+                        if (source != null) {
+                            matchHintUsed = true
+                            hintSource = source.id
+                            matchSelection = source.id
+                        }
+                    }) { Text("💡", fontSize = 30.sp) }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         matchGame.items.forEach { item ->
                             if (item.id !in matchGame.matched) {
                                 Surface(Modifier.weight(1f).height(84.dp).clickable { matchSelection = item.id }
                                     .dragAndDropSource { startTransfer(DragAndDropTransferData(ClipData.newPlainText("match-id", item.id))) },
-                                    color = if (matchSelection == item.id) yellow else mint.copy(alpha = 0.2f),
+                                    color = if (matchSelection == item.id || hintSource == item.id) yellow else mint.copy(alpha = 0.2f),
                                     shape = RoundedCornerShape(14.dp)) {
                                     Box(contentAlignment = Alignment.Center) { if (selected == 4) HalfVisual(item, left = true) else MatchVisual(item, selected == 3) }
                                 }
@@ -271,6 +281,7 @@ private fun YonaMatchApp() {
                                 matchFeedback = if (correct) "Harika!" else "Tekrar deneyelim!"
                                 wrongTarget = if (correct) null else item.id
                                 wrongTick++
+                                hintSource = null
                                 matchSelection = null
                                 if (matchGame.complete) {
                                     val next = (level + 1).coerceAtMost(20)
@@ -278,7 +289,8 @@ private fun YonaMatchApp() {
                                     resultStars = gameProgress.finish(
                                         when (selected) { 2 -> "shape"; 3 -> "color"; 4 -> "halves"; else -> "association" },
                                         level, matchGame.attempts,
-                                        if (selected == 5) associationLevels[level - 1].idealAttempts else matchLevels[level - 1].idealAttempts
+                                        if (selected == 5) associationLevels[level - 1].idealAttempts else matchLevels[level - 1].idealAttempts,
+                                        hintsUsed = matchHintUsed
                                     )
                                     matchPrefs.edit().putInt(when (selected) { 2 -> "shape_unlocked"; 3 -> "color_unlocked"; 4 -> "halves_unlocked"; else -> "association_unlocked" }, when (selected) { 2 -> shapeUnlocked; 3 -> colorUnlocked; 4 -> halvesUnlocked; else -> associationUnlocked }).apply()
                                     page = "result"
