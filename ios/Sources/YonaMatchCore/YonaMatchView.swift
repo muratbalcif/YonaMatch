@@ -42,8 +42,32 @@ public struct YonaMatchView: View {
         default: return .gray
         }
     }
+    private static let halfArtIds: Set<String> = ["apple", "butterfly", "fish", "car", "house", "flower", "rocket", "turtle"]
+
+    @ViewBuilder private static func halfArtwork(_ item: MatchItem) -> some View {
+        if halfArtIds.contains(item.id) {
+            HalfArtworkShape(id: item.id)
+                .fill(halfArtworkColor(item.id))
+                .frame(width: 56, height: 56)
+        } else {
+            Text(item.symbol).font(.system(size: 47))
+                .frame(width: 56, height: 56)
+        }
+    }
+
+    private static func halfArtworkColor(_ id: String) -> Color {
+        switch id {
+        case "apple", "rocket": return Color(red: 0.96, green: 0.42, blue: 0.44)
+        case "butterfly": return Color(red: 0.72, green: 0.61, blue: 1)
+        case "fish": return Color(red: 0.30, green: 0.68, blue: 0.92)
+        case "car", "flower": return Color(red: 1, green: 0.56, blue: 0.64)
+        case "house": return Color(red: 1, green: 0.79, blue: 0.34)
+        default: return Color(red: 0.36, green: 0.83, blue: 0.63)
+        }
+    }
+
     @ViewBuilder private func halfVisual(_ item: MatchItem, left: Bool) -> some View {
-        Text(item.symbol).font(.system(size: 47))
+        Self.halfArtwork(item)
             .frame(width: 56, height: 62)
             .offset(x: left ? 14 : -14)
             .frame(width: 28, height: 62)
@@ -67,7 +91,7 @@ public struct YonaMatchView: View {
         }
 
         private func half(left: Bool) -> some View {
-            Text(item.symbol).font(.system(size: 47))
+            YonaMatchView.halfArtwork(item)
                 .frame(width: 56, height: 62)
                 .offset(x: left ? 14 : -14)
                 .frame(width: 28, height: 62)
