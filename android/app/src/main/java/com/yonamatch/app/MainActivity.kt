@@ -164,7 +164,7 @@ private fun YonaMatchApp() {
     val associationPairs = remember(selected, level) { associationLevels[level - 1].pairs }
     val matchItems = remember(selected, level, matchRound) { if (selected == 5) associationPairs.map { it.source } else matchLevels[level - 1].items }
     val associationTargets = remember(selected, level) { associationPairs.associate { it.source.id to it.target } }
-    val matchGame = remember(selected, level, matchRound) { MatchGame(matchItems) }
+    val matchGame = remember(selected, level, matchRound) { MatchGame(matchItems, if (selected == 5) associationTargets else emptyMap()) }
     var matchSelection by remember(selected, level, matchRound) { mutableStateOf<String?>(null) }
     var matchCount by remember(selected, level, matchRound) { mutableIntStateOf(0) }
     var matchHintUsed by remember(selected, level, matchRound) { mutableStateOf(false) }
@@ -281,6 +281,7 @@ private fun YonaMatchApp() {
                     }
                     LazyVerticalGrid(columns = GridCells.Fixed(if (matchGame.targets.size <= 3) 1 else 2), modifier = Modifier.weight(1f).height(if (matchGame.targets.size <= 3) 354.dp else if (matchGame.targets.size <= 4) 228.dp else 342.dp), userScrollEnabled = false, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         items(matchGame.targets, key = { it.id }) { item ->
+                            val completedTarget = if (selected == 5) associationTargets.entries.firstOrNull { it.value.id == item.id }?.key ?: item.id else item.id
                             val completeMatch: (String) -> Unit = { source ->
                                 val correct = matchGame.match(source, item.id)
                                 matchCount = matchGame.matched.size
@@ -312,10 +313,10 @@ private fun YonaMatchApp() {
                                         }
                                     }
                                 })
-                                .clickable(enabled = matchSelection != null && item.id !in matchGame.matched) { completeMatch(matchSelection!!) },
-                                color = if (item.id in matchGame.matched) mint.copy(alpha = 0.5f) else if (wrongTarget == item.id) Color(0xFFFFD6DC) else lavender.copy(alpha = 0.2f),
+                                .clickable(enabled = matchSelection != null && completedTarget !in matchGame.matched) { completeMatch(matchSelection!!) },
+                                color = if (completedTarget in matchGame.matched) mint.copy(alpha = 0.5f) else if (wrongTarget == item.id) Color(0xFFFFD6DC) else lavender.copy(alpha = 0.2f),
                                 shape = RoundedCornerShape(14.dp)) {
-                                Box(contentAlignment = Alignment.Center) { if (wrongTarget == item.id) Text("↻", fontSize = 32.sp) else if (item.id in matchGame.matched) Text("✓", fontSize = 32.sp) else if (selected == 4) HalfVisual(item, left = false) else MatchVisual(if (selected == 5) associationTargets.getValue(item.id) else item, selected == 3, faded = selected == 2) }
+                                Box(contentAlignment = Alignment.Center) { if (wrongTarget == item.id) Text("↻", fontSize = 32.sp) else if (completedTarget in matchGame.matched) Text("✓", fontSize = 32.sp) else if (selected == 4) HalfVisual(item, left = false) else MatchVisual(item, selected == 3, faded = selected == 2) }
                             }
                         }
                     }
