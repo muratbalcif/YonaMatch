@@ -26,6 +26,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -135,7 +137,7 @@ private fun YonaMatchApp() {
                         items(20) { index ->
                             val n = index + 1
                             Surface(
-                                modifier = Modifier.aspectRatio(1f).clickable(enabled = n <= (if (selected == 1) shadowUnlocked else unlocked) { level = n; if (selected == 1) shadowRound++ else round++; page = "game" },
+                                modifier = Modifier.aspectRatio(1f).clickable(enabled = n <= (if (selected == 1) shadowUnlocked else unlocked)) { level = n; if (selected == 1) shadowRound++ else round++; page = "game" },
                                 color = if (n <= (if (selected == 1) shadowUnlocked else unlocked)) yellow.copy(alpha = 0.35f) else Color.LightGray.copy(alpha = 0.25f),
                                 shape = RoundedCornerShape(16.dp)
                             ) {
@@ -185,7 +187,7 @@ private fun YonaMatchApp() {
                                 },
                                 color = if (item.id in shadow.matched) mint.copy(alpha = 0.4f) else lavender.copy(alpha = 0.25f),
                                 shape = RoundedCornerShape(16.dp)
-                            ) { Box(contentAlignment = Alignment.Center) { Text(if (item.id in shadow.matched) "✓" else item.emoji, fontSize = 40.sp, color = navy.copy(alpha = 0.25f)) } }
+                            ) { Box(contentAlignment = Alignment.Center) { if (item.id in shadow.matched) Text("✓", fontSize = 40.sp) else Image(painter = painterResource(id = when (item.id) { "lion" -> R.drawable.shadow_lion; "elephant" -> R.drawable.shadow_elephant; "rabbit" -> R.drawable.shadow_rabbit; "cat" -> R.drawable.shadow_cat; "dog" -> R.drawable.shadow_dog; "bear" -> R.drawable.shadow_bear; "penguin" -> R.drawable.shadow_penguin; else -> R.drawable.shadow_panda }), contentDescription = "Gölge hedefi", modifier = Modifier.size(65.dp), alpha = 0.75f) } }
                         }
                     }
                     Text("Eşleşen: $shadowMatches/${shadow.items.size} · Deneme: ${shadow.attempts}")
