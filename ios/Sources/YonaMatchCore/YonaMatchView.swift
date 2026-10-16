@@ -213,9 +213,9 @@ public struct YonaMatchView: View {
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: matchGame.items.count <= 3 ? 1 : 2), spacing: 10) {
                             ForEach(matchGame.items) { item in
                                 Button { if !matchGame.matched.contains(item.id) { matchSelection = item.id } } label: {
-                                    Group { if selected == 4 { halfVisual(item, left: true) } else { matchVisual(item) } }
+                                    Group { if matchGame.matched.contains(item.id) { Text("✓").font(.system(size: 42)) } else if selected == 4 { halfVisual(item, left: true) } else { matchVisual(item) } }
                                         .frame(maxWidth: .infinity, minHeight: 110)
-                                        .background(matchSelection == item.id ? Color.yellow.opacity(0.5) : Color.mint.opacity(0.2), in: RoundedRectangle(cornerRadius: 14))
+                                        .background(matchGame.matched.contains(item.id) ? Color.mint.opacity(0.5) : (matchSelection == item.id ? Color.yellow.opacity(0.5) : Color.mint.opacity(0.2)), in: RoundedRectangle(cornerRadius: 14))
                                 }
                                 .disabled(matchGame.matched.contains(item.id))
                                 .onDrag { NSItemProvider(object: item.id as NSString) }
