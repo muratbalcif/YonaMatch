@@ -66,7 +66,7 @@ public struct YonaMatchView: View {
     }
     private static let halfArtIds: Set<String> = ["apple", "butterfly", "fish", "car", "house", "flower", "rocket", "turtle"]
 
-    @ViewBuilder private static func halfArtwork(_ item: MatchItem) -> some View {
+    @ViewBuilder static func halfArtwork(_ item: MatchItem) -> some View {
         if halfArtIds.contains(item.id) {
             HalfArtworkShape(id: item.id)
                 .fill(halfArtworkColor(item.id))
