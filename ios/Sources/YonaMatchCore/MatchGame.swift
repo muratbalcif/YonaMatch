@@ -11,19 +11,21 @@ public struct MatchItem: Identifiable, Equatable {
 public struct MatchGame {
     public let items: [MatchItem]
     public let targets: [MatchItem]
+    private let targetBySource: [String: String]
     public private(set) var matched: Set<String> = []
     public private(set) var attempts = 0
-    public init(items: [MatchItem]) {
+    public init(items: [MatchItem], associationTargets: [String: MatchItem] = [:]) {
         precondition(!items.isEmpty && Set(items.map(\.id)).count == items.count)
         self.items = items
-        self.targets = items.shuffled()
+        self.targetBySource = associationTargets.mapValues(\.id)
+        self.targets = (associationTargets.isEmpty ? items : items.map { associationTargets[$0.id]! }).shuffled()
     }
     @discardableResult public mutating func match(source: String, target: String) -> Bool {
         guard items.contains(where: { $0.id == source }),
-              items.contains(where: { $0.id == target }),
+              targets.contains(where: { $0.id == target }),
               !matched.contains(source), !matched.contains(target) else { return false }
         attempts += 1
-        if source == target { matched.insert(source); return true }
+        if (targetBySource[source] ?? source) == target { matched.insert(source); return true }
         return false
     }
     public var complete: Bool { matched.count == items.count }
