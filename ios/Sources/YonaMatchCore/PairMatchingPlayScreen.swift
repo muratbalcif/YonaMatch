@@ -31,8 +31,7 @@ struct PairMatchingPlayScreen: View {
         if mode == 3 {
             Circle().fill(color(item.id)).frame(width: 54, height: 54)
         } else if mode == 4 {
-            Text(item.symbol)
-                .font(.system(size: 54))
+            YonaMatchView.halfArtwork(item)
                 .frame(width: 56, height: 62)
                 .offset(x: isTarget ? -14 : 14)
                 .frame(width: 28, height: 62)
