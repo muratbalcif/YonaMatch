@@ -49,3 +49,20 @@ for game_type in ("shape", "color", "halves"):
     for platform in ("android/app/src/main/assets/levels", "ios/Sources/YonaMatchCore/Resources/levels"):
         assert json.loads((root / platform / f"{game_type}.json").read_text()) == content
 print("Shape and color validation passed: 40 levels, both platforms")
+
+association = json.loads((root / "shared-content/levels/association.json").read_text())
+assert association["schemaVersion"] == 1 and association["gameType"] == "association"
+assert len(association["levels"]) == 20
+assert [entry["order"] for entry in association["levels"]] == list(range(1, 21))
+association_ids = {item["id"] for item in association["catalog"]}
+assert len(association_ids) == len(association["catalog"])
+for entry in association["levels"]:
+    sources = [pair["source"] for pair in entry["pairs"]]
+    targets = [pair["target"] for pair in entry["pairs"]]
+    assert len(sources) == len(set(sources))
+    assert len(targets) == len(set(targets))
+    assert set(sources + targets).issubset(association_ids)
+    assert entry["idealAttempts"] >= len(entry["pairs"])
+for platform in ("android/app/src/main/assets/levels", "ios/Sources/YonaMatchCore/Resources/levels"):
+    assert json.loads((root / platform / "association.json").read_text()) == association
+print("Association validation passed: 20 levels, both platforms")
