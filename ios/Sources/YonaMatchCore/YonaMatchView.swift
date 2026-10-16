@@ -7,6 +7,10 @@ public struct YonaMatchView: View {
     private let gameProgress = GameProgressStore()
     @State private var resultStars = 3
     @State private var game = MemoryGame()
+    @State private var memoryHintUsed = false
+    @State private var memoryHintPair: Set<Int> = []
+    @State private var shadowHintUsed = false
+    @State private var shadowHintId: String? = nil
 
     @AppStorage("shape_unlocked") private var shapeUnlocked = 1
     @AppStorage("color_unlocked") private var colorUnlocked = 1
@@ -275,6 +279,13 @@ public struct YonaMatchView: View {
                         }
                         Button("↻") { resetMatching() }.font(.system(size: 30)).accessibilityLabel("Yeniden başlat")
                     } else if selected == 1 {
+                        Button {
+                            if let item = shadow.items.first(where: { !shadow.matched.contains($0.id) }) {
+                                shadowHintUsed = true
+                                shadowHintId = item.id
+                                selectedShadow = item.id
+                            }
+                        } label: { Text("💡").font(.system(size: 30)) }
                         Text("🐘 Gölgesini Bul").font(.title2.bold())
                         Text(shadowFeedback)
                         Text("Hayvanlar").font(.headline)
@@ -285,7 +296,7 @@ public struct YonaMatchView: View {
                                 } label: {
                                     Text(item.emoji).font(.system(size: 42))
                                         .frame(maxWidth: .infinity, minHeight: 88)
-                                        .background(selectedShadow == item.id ? Color.yellow.opacity(0.6) : Color.blue.opacity(0.2),
+                                        .background((selectedShadow == item.id || shadowHintId == item.id) ? Color.yellow.opacity(0.6) : Color.blue.opacity(0.2),
                                                     in: RoundedRectangle(cornerRadius: 16))
                                 }
                                 .onDrag { NSItemProvider(object: item.id as NSString) }
@@ -299,7 +310,7 @@ public struct YonaMatchView: View {
                                     let correct = shadow.match(sourceId: source, targetId: item.id)
                                     shadowFeedback = correct ? "Harika, doğru eşleşme!" : "Tekrar deneyelim!"
                                     selectedShadow = nil
-                                    if shadow.isComplete { shadowUnlocked = max(shadowUnlocked, min(20, level + 1)); resultStars = gameProgress.finish("shadow", level: level, attempts: shadow.attempts, idealAttempts: shadow.items.count); page = .result }
+                                    if shadow.isComplete { shadowUnlocked = max(shadowUnlocked, min(20, level + 1)); resultStars = gameProgress.finish("shadow", level: level, attempts: shadow.attempts, idealAttempts: shadow.items.count, hintsUsed: shadowHintUsed); page = .result }
                                 } label: {
                                     Text(shadow.matched.contains(item.id) ? "✓" : item.emoji)
                                         .font(.system(size: 42))
@@ -325,12 +336,20 @@ public struct YonaMatchView: View {
                         Text("Eşleşen: \(shadow.matched.count)/\(shadow.items.count) · Deneme: \(shadow.attempts)")
                         Button("Yeniden Başlat") { resetShadow() }
                     } else {
+                    Button {
+                        if let first = game.cards.indices.first(where: { !game.matched.contains($0) }),
+                           let second = game.cards.indices.first(where: { $0 != first && !game.matched.contains($0) && game.cards[$0] == game.cards[first] }) {
+                            memoryHintUsed = true
+                            memoryHintPair = [first, second]
+                        }
+                    } label: { Text("💡").font(.system(size: 30)) }
                     Text("Hafıza Kartları · Bölüm \(level)").font(.title2.bold())
                     Text("Çiftleri bul! · Deneme: \(game.attempts) · \(game.matched.count / 2)/\(game.cards.count / 2)")
                     LazyVGrid(columns: columns, spacing: 10) {
                         ForEach(game.cards.indices, id: \.self) { index in
                             Button {
                                 game.select(index)
+                                if game.revealed.count == 2 { memoryHintPair = [] }
                                 if game.awaitingReset {
                                     Task { @MainActor in
                                         try? await Task.sleep(nanoseconds: 900_000_000)
@@ -339,13 +358,13 @@ public struct YonaMatchView: View {
                                 }
                                 if game.isComplete {
                                     let ideal = levels.first(where: { $0.order == level })?.idealAttempts ?? game.cards.count / 2
-                                    resultStars = gameProgress.finish("memory", level: level, attempts: game.attempts, idealAttempts: ideal)
+                                    resultStars = gameProgress.finish("memory", level: level, attempts: game.attempts, idealAttempts: ideal, hintsUsed: memoryHintUsed)
                                     progress.finish(level: level, stars: resultStars)
                                     unlocked = progress.unlocked
                                     page = .result
                                 }
                             } label: {
-                                Text(game.revealed.contains(index) || game.matched.contains(index) ? game.cards[index] : "❔")
+                                Text(game.revealed.contains(index) || game.matched.contains(index) || memoryHintPair.contains(index) ? game.cards[index] : "❔")
                                     .contentTransition(.opacity)
                                     .animation(.easeInOut(duration: 0.28), value: game.revealed.contains(index) || game.matched.contains(index))
                                     .font(.system(size: 30))
@@ -464,6 +483,8 @@ public struct YonaMatchView: View {
     }
 
     private func resetShadow() {
+        shadowHintUsed = false
+        shadowHintId = nil
         shadow = ShadowGame(items: (try? ShadowLevelRepository.items(for: level)) ?? [])
         selectedShadow = nil
         shadowFeedback = "Önce hayvanı, sonra gölgesini seç."
