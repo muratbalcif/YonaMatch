@@ -231,14 +231,14 @@ public struct YonaMatchView: View {
                                 } label: {
                                     Group {
                                         if wrongMatchTarget == item.id { Text("↻").font(.system(size: 30)).foregroundStyle(.red) }
-                                        else if matchGame.matched.contains(item.id) { Text("✓").font(.system(size: 30)) }
+                                        else if matchGame.matched.contains(selected == 5 ? (associationTargets.first(where: { $0.value.id == item.id })?.key ?? item.id) : item.id) { Text("✓").font(.system(size: 30)) }
                                         else if selected == 4 { halfVisual(item, left: false) }
-                                        else { matchVisual(selected == 5 ? (associationTargets[item.id] ?? item) : item, faded: selected == 2) }
+                                        else { matchVisual(item, faded: selected == 2) }
                                     }
                                         .frame(maxWidth: .infinity, minHeight: 110)
-                                        .background(matchGame.matched.contains(item.id) ? Color.mint.opacity(0.5) : (wrongMatchTarget == item.id ? Color.red.opacity(0.16) : Color.purple.opacity(0.2)), in: RoundedRectangle(cornerRadius: 14))
+                                        .background(matchGame.matched.contains(selected == 5 ? (associationTargets.first(where: { $0.value.id == item.id })?.key ?? item.id) : item.id) ? Color.mint.opacity(0.5) : (wrongMatchTarget == item.id ? Color.red.opacity(0.16) : Color.purple.opacity(0.2)), in: RoundedRectangle(cornerRadius: 14))
                                 }
-                                .disabled(matchGame.matched.contains(item.id))
+                                .disabled(matchGame.matched.contains(selected == 5 ? (associationTargets.first(where: { $0.value.id == item.id })?.key ?? item.id) : item.id))
                                 .onDrop(of: [.plainText], isTargeted: nil) { providers in
                                     guard let provider = providers.first else { return false }
                                     _ = provider.loadObject(ofClass: NSString.self) { value, _ in
@@ -448,7 +448,7 @@ public struct YonaMatchView: View {
             items = (try? MatchLevelRepository.items(type, level: level)) ?? []
             associationTargets = [:]
         }
-        if !items.isEmpty { matchGame = MatchGame(items: items) }
+        if !items.isEmpty { matchGame = MatchGame(items: items, associationTargets: selected == 5 ? associationTargets : [:]) }
         matchSelection = nil
         matchHintUsed = false
         hintSource = nil
