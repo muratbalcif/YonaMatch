@@ -5,6 +5,13 @@ public struct YonaMatchView: View {
     private let levels = (try? LevelRepository.memoryLevels()) ?? []
     private let progress = ProgressRepository()
     @State private var game = MemoryGame()
+    @State private var shadow = ShadowGame(items: [
+        .init(id: "lion", emoji: "🦁", label: "Aslan"),
+        .init(id: "elephant", emoji: "🐘", label: "Fil"),
+        .init(id: "rabbit", emoji: "🐰", label: "Tavşan")
+    ])
+    @State private var selectedShadow: String? = nil
+    @State private var shadowFeedback = "Önce hayvanı, sonra gölgesini seç."
     @State private var page: Page = .home
     @State private var selected = 0
     @State private var level = 1
@@ -64,28 +71,66 @@ public struct YonaMatchView: View {
                     }
                 case .levels:
                     Text("\(modes[selected].1) \(modes[selected].0)").font(.title2.bold())
-                    if selected != 0 {
+                    if selected > 1 {
                         Text("Bu oyun yakında hazır olacak. Şimdilik Hafıza Kartları'nı oynayabilirsin.")
                         Button("Hafıza Kartları") { selected = 0 }
                     } else {
                         Text("Bir bölüm seç")
                         LazyVGrid(columns: columns, spacing: 12) {
-                            ForEach(1...20, id: \.self) { n in
+                            ForEach(1...(selected == 1 ? 1 : 20), id: \.self) { n in
                                 Button {
                                     level = n
-                                    game = makeGame()
+                                    if selected == 1 { resetShadow() } else { game = makeGame() }
                                     page = .game
                                 } label: {
-                                    Text(n <= unlocked ? "\(n) ⭐" : "🔒")
+                                    Text(selected == 1 || n <= unlocked ? "\(n) ⭐" : "🔒")
                                         .frame(maxWidth: .infinity, minHeight: 65)
-                                        .background(n <= unlocked ? Color.yellow.opacity(0.3) : Color.gray.opacity(0.14),
+                                        .background((selected == 1 || n <= unlocked) ? Color.yellow.opacity(0.3) : Color.gray.opacity(0.14),
                                                     in: RoundedRectangle(cornerRadius: 16))
                                 }
-                                .disabled(n > unlocked)
+                                .disabled(selected == 0 && n > unlocked)
                             }
                         }
                     }
                 case .game:
+                    if selected == 1 {
+                        Text("🐘 Gölgesini Bul").font(.title2.bold())
+                        Text(shadowFeedback)
+                        Text("Hayvanlar").font(.headline)
+                        HStack(spacing: 10) {
+                            ForEach(shadow.items.filter { !shadow.matched.contains($0.id) }) { item in
+                                Button {
+                                    selectedShadow = item.id
+                                } label: {
+                                    Text(item.emoji).font(.system(size: 42))
+                                        .frame(maxWidth: .infinity, minHeight: 88)
+                                        .background(selectedShadow == item.id ? Color.yellow.opacity(0.6) : Color.blue.opacity(0.2),
+                                                    in: RoundedRectangle(cornerRadius: 16))
+                                }
+                            }
+                        }
+                        Text("Gölgesini seç").font(.headline)
+                        HStack(spacing: 10) {
+                            ForEach(shadow.targets) { item in
+                                Button {
+                                    guard let source = selectedShadow else { return }
+                                    let correct = shadow.match(sourceId: source, targetId: item.id)
+                                    shadowFeedback = correct ? "Harika, doğru eşleşme!" : "Tekrar deneyelim!"
+                                    selectedShadow = nil
+                                    if shadow.isComplete { page = .result }
+                                } label: {
+                                    Text(shadow.matched.contains(item.id) ? "✓" : item.emoji)
+                                        .font(.system(size: 42))
+                                        .opacity(shadow.matched.contains(item.id) ? 1 : 0.25)
+                                        .frame(maxWidth: .infinity, minHeight: 88)
+                                        .background(Color.purple.opacity(0.2), in: RoundedRectangle(cornerRadius: 16))
+                                }
+                                .disabled(selectedShadow == nil || shadow.matched.contains(item.id))
+                            }
+                        }
+                        Text("Eşleşen: \(shadow.matched.count)/3 · Deneme: \(shadow.attempts)")
+                        Button("Yeniden Başlat") { resetShadow() }
+                    } else {
                     Text("Hafıza Kartları · Bölüm \(level)").font(.title2.bold())
                     Text("Çiftleri bul! · Deneme: \(game.attempts) · \(game.matched.count / 2)/\(game.cards.count / 2)")
                     LazyVGrid(columns: columns, spacing: 10) {
@@ -115,14 +160,14 @@ public struct YonaMatchView: View {
                         }
                     }
                     Button("Yeniden Başlat") { game = makeGame() }
+                    }
                 case .result:
                     Text("🎉").font(.system(size: 76)).frame(maxWidth: .infinity)
                     Text("Harika! Bölümü tamamladın!").font(.title.bold()).frame(maxWidth: .infinity)
-                    Text(String(repeating: "⭐", count: game.attempts <= (levels.first(where: { $0.order == level })?.idealAttempts ?? 3) ? 3 : 2)).font(.largeTitle).frame(maxWidth: .infinity)
-                    Text("Deneme sayısı: \(game.attempts)").frame(maxWidth: .infinity)
-                    Button("Sonraki Bölüm") {
-                        level = min(level + 1, 20)
-                        game = makeGame()
+                    Text(String(repeating: "⭐", count: selected == 1 ? 3 : (game.attempts <= (levels.first(where: { $0.order == level })?.idealAttempts ?? 3) ? 3 : 2))).font(.largeTitle).frame(maxWidth: .infinity)
+                    Text("Deneme sayısı: \(selected == 1 ? shadow.attempts : game.attempts)").frame(maxWidth: .infinity)
+                    Button(selected == 1 ? "Tekrar Oyna" : "Sonraki Bölüm") {
+                        if selected == 1 { resetShadow() } else { level = min(level + 1, 20); game = makeGame() }
                         page = .game
                     }.buttonStyle(.borderedProminent).frame(maxWidth: .infinity)
                     Button("Seviye Haritası") { page = .levels }.frame(maxWidth: .infinity)
@@ -133,6 +178,16 @@ public struct YonaMatchView: View {
             .foregroundStyle(navy)
         }
         .background(cream.ignoresSafeArea())
+    }
+
+    private func resetShadow() {
+        shadow = ShadowGame(items: [
+            .init(id: "lion", emoji: "🦁", label: "Aslan"),
+            .init(id: "elephant", emoji: "🐘", label: "Fil"),
+            .init(id: "rabbit", emoji: "🐰", label: "Tavşan")
+        ])
+        selectedShadow = nil
+        shadowFeedback = "Önce hayvanı, sonra gölgesini seç."
     }
 
     private func makeGame() -> MemoryGame {
