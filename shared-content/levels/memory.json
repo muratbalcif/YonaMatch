@@ -7,22 +7,140 @@
       "order": 1,
       "pairs": 3,
       "theme": "animals",
-      "stars": {
-        "complete": 1,
-        "attemptsAtMost": 5,
-        "perfect": 3
-      }
+      "idealAttempts": 3
     },
     {
       "id": "memory-002",
       "order": 2,
+      "pairs": 3,
+      "theme": "animals",
+      "idealAttempts": 3
+    },
+    {
+      "id": "memory-003",
+      "order": 3,
+      "pairs": 3,
+      "theme": "animals",
+      "idealAttempts": 3
+    },
+    {
+      "id": "memory-004",
+      "order": 4,
+      "pairs": 3,
+      "theme": "animals",
+      "idealAttempts": 3
+    },
+    {
+      "id": "memory-005",
+      "order": 5,
+      "pairs": 3,
+      "theme": "animals",
+      "idealAttempts": 3
+    },
+    {
+      "id": "memory-006",
+      "order": 6,
       "pairs": 4,
       "theme": "animals",
-      "stars": {
-        "complete": 1,
-        "attemptsAtMost": 8,
-        "perfect": 4
-      }
+      "idealAttempts": 4
+    },
+    {
+      "id": "memory-007",
+      "order": 7,
+      "pairs": 4,
+      "theme": "animals",
+      "idealAttempts": 4
+    },
+    {
+      "id": "memory-008",
+      "order": 8,
+      "pairs": 4,
+      "theme": "animals",
+      "idealAttempts": 4
+    },
+    {
+      "id": "memory-009",
+      "order": 9,
+      "pairs": 4,
+      "theme": "animals",
+      "idealAttempts": 4
+    },
+    {
+      "id": "memory-010",
+      "order": 10,
+      "pairs": 4,
+      "theme": "animals",
+      "idealAttempts": 4
+    },
+    {
+      "id": "memory-011",
+      "order": 11,
+      "pairs": 6,
+      "theme": "animals",
+      "idealAttempts": 6
+    },
+    {
+      "id": "memory-012",
+      "order": 12,
+      "pairs": 6,
+      "theme": "animals",
+      "idealAttempts": 6
+    },
+    {
+      "id": "memory-013",
+      "order": 13,
+      "pairs": 6,
+      "theme": "animals",
+      "idealAttempts": 6
+    },
+    {
+      "id": "memory-014",
+      "order": 14,
+      "pairs": 6,
+      "theme": "animals",
+      "idealAttempts": 6
+    },
+    {
+      "id": "memory-015",
+      "order": 15,
+      "pairs": 6,
+      "theme": "animals",
+      "idealAttempts": 6
+    },
+    {
+      "id": "memory-016",
+      "order": 16,
+      "pairs": 8,
+      "theme": "animals",
+      "idealAttempts": 8
+    },
+    {
+      "id": "memory-017",
+      "order": 17,
+      "pairs": 8,
+      "theme": "animals",
+      "idealAttempts": 8
+    },
+    {
+      "id": "memory-018",
+      "order": 18,
+      "pairs": 8,
+      "theme": "animals",
+      "idealAttempts": 8
+    },
+    {
+      "id": "memory-019",
+      "order": 19,
+      "pairs": 8,
+      "theme": "animals",
+      "idealAttempts": 8
+    },
+    {
+      "id": "memory-020",
+      "order": 20,
+      "pairs": 8,
+      "theme": "animals",
+      "idealAttempts": 8
     }
   ]
 }
