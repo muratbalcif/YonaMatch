@@ -27,6 +27,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
@@ -51,6 +53,19 @@ private fun matchColor(id: String): Color = when (id) {
     "yellow" -> Color(0xFFFACC15)
     "purple" -> Color(0xFFA855F7)
     else -> Color.Gray
+}
+
+@Composable
+private fun HalfVisual(item: MatchItem, left: Boolean) {
+    Box(Modifier.size(width = 52.dp, height = 62.dp)
+        .drawWithContent {
+            val middle = size.width / 2f
+            clipRect(left = if (left) 0f else middle, right = if (left) middle else size.width) {
+                this@drawWithContent.drawContent()
+            }
+        }, contentAlignment = Alignment.Center) {
+        Text(item.symbol, fontSize = 47.sp)
+    }
 }
 
 @Composable
@@ -192,7 +207,7 @@ private fun YonaMatchApp() {
                                     .dragAndDropSource { startTransfer(DragAndDropTransferData(ClipData.newPlainText("match-id", item.id))) },
                                     color = if (matchSelection == item.id) yellow else mint.copy(alpha = 0.2f),
                                     shape = RoundedCornerShape(14.dp)) {
-                                    Box(contentAlignment = Alignment.Center) { MatchVisual(item, selected == 3) }
+                                    Box(contentAlignment = Alignment.Center) { if (selected == 4) HalfVisual(item, left = true) else MatchVisual(item, selected == 3) }
                                 }
                             }
                         }
@@ -224,7 +239,7 @@ private fun YonaMatchApp() {
                                 .clickable(enabled = matchSelection != null && item.id !in matchGame.matched) { completeMatch(matchSelection!!) },
                                 color = if (item.id in matchGame.matched) mint.copy(alpha = 0.5f) else lavender.copy(alpha = 0.2f),
                                 shape = RoundedCornerShape(14.dp)) {
-                                Box(contentAlignment = Alignment.Center) { if (item.id in matchGame.matched) Text("✓", fontSize = 32.sp) else MatchVisual(item, selected == 3, faded = selected == 2) }
+                                Box(contentAlignment = Alignment.Center) { if (item.id in matchGame.matched) Text("✓", fontSize = 32.sp) else if (selected == 4) HalfVisual(item, left = false) else MatchVisual(item, selected == 3, faded = selected == 2) }
                             }
                         }
                     }
