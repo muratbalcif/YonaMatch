@@ -166,6 +166,20 @@ public struct YonaMatchView: View {
                                 }
                             }
                         }
+                        if selected == 4 && !matchGame.matched.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("✨").font(.system(size: 28))
+                                HStack(spacing: 12) {
+                                    ForEach(matchGame.items.filter { matchGame.matched.contains($0.id) }) { solved in
+                                        Text(solved.symbol).font(.system(size: 38))
+                                            .padding(10)
+                                            .background(Color.mint.opacity(0.3), in: RoundedRectangle(cornerRadius: 18))
+                                            .transition(.scale.combined(with: .opacity))
+                                    }
+                                }
+                            }
+                            .animation(.spring(response: 0.35, dampingFraction: 0.65), value: matchGame.matched.count)
+                        }
                         Button("↻") { resetMatching() }.font(.system(size: 30)).accessibilityLabel("Yeniden başlat")
                     } else if selected == 1 {
                         Text("🐘 Gölgesini Bul").font(.title2.bold())
