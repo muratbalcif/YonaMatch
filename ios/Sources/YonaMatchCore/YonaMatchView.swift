@@ -44,10 +44,10 @@ public struct YonaMatchView: View {
     }
     @ViewBuilder private func halfVisual(_ item: MatchItem, left: Bool) -> some View {
         Text(item.symbol).font(.system(size: 47))
-            .frame(width: 52, height: 62)
-            .mask(alignment: left ? .leading : .trailing) {
-                Rectangle().frame(width: 26, height: 62)
-            }
+            .frame(width: 56, height: 62)
+            .offset(x: left ? 14 : -14)
+            .frame(width: 28, height: 62)
+            .clipped()
             .accessibilityLabel(item.label)
     }
     @ViewBuilder private func matchVisual(_ item: MatchItem, faded: Bool = false) -> some View {
