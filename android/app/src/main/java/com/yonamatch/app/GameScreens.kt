@@ -1,6 +1,19 @@
 package com.yonamatch.app
 
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.yonamatch.app.data.AssociationLevelRepository
+import com.yonamatch.app.data.MatchGame
 
 /** Separate screen entry points; navigation selects one screen, not one shared page. */
 @Composable fun MemoryGameScreen(content: @Composable () -> Unit) = content()
@@ -8,4 +21,80 @@ import androidx.compose.runtime.Composable
 @Composable fun ShapeGameScreen(content: @Composable () -> Unit) = content()
 @Composable fun ColorGameScreen(content: @Composable () -> Unit) = content()
 @Composable fun HalvesGameScreen(content: @Composable () -> Unit) = content()
-@Composable fun AssociationGameScreen(content: @Composable () -> Unit) = content()
+/** Owns its level, selection, attempts and matching state independently of MainActivity. */
+@Composable
+fun AssociationGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit) {
+    val context = LocalContext.current
+    val levelData = remember(context, level) { AssociationLevelRepository(context).levels()[level - 1] }
+    val pairs = levelData.pairs
+    val targets = remember(level) { pairs.associate { it.source.id to it.target } }
+    val game = remember(level, round) { MatchGame(pairs.map { it.source }, targets) }
+    var selection by remember(level, round) { mutableStateOf<String?>(null) }
+    var hintUsed by remember(level, round) { mutableStateOf(false) }
+    var revision by remember(level, round) { mutableIntStateOf(0) }
+    var incorrect by remember(level, round) { mutableStateOf<String?>(null) }
+    val completed = game.matched.toSet()
+    fun submit(source: String, target: String) {
+        if (game.complete) return
+        val correct = game.match(source, target)
+        revision++
+        incorrect = if (correct) null else target
+        selection = null
+        if (game.complete) onComplete(game.attempts, hintUsed)
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Text("🔗", fontSize = 32.sp)
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = {
+                selection = game.items.firstOrNull { it.id !in completed }?.id
+                if (selection != null) hintUsed = true
+            }) { Text("💡", fontSize = 34.sp) }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(if (game.items.size <= 3) 1 else 2),
+                modifier = Modifier.weight(1f).height(if (game.items.size <= 3) 354.dp else if (game.items.size <= 4) 228.dp else 342.dp),
+                userScrollEnabled = false,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(game.items, key = { it.id }) { item ->
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().height(110.dp).clickable(enabled = item.id !in completed) { selection = item.id },
+                        color = if (item.id in completed) Color(0xFFBDEDD7) else if (selection == item.id) Color(0xFFFFE4A0) else Color(0xFFE0F7EC),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(if (item.id in completed) "✓" else item.symbol, fontSize = 46.sp)
+                        }
+                    }
+                }
+            }
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(if (game.targets.size <= 3) 1 else 2),
+                modifier = Modifier.weight(1f).height(if (game.targets.size <= 3) 354.dp else if (game.targets.size <= 4) 228.dp else 342.dp),
+                userScrollEnabled = false,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(game.targets, key = { it.id }) { item ->
+                    val sourceId = targets.entries.first { it.value.id == item.id }.key
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().height(110.dp).clickable(enabled = selection != null && sourceId !in completed) {
+                            selection?.let { submit(it, item.id) }
+                        },
+                        color = if (sourceId in completed) Color(0xFFBDEDD7) else if (incorrect == item.id) Color(0xFFFFD6DC) else Color(0xFFECE6FF),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(if (sourceId in completed) "✓" else item.symbol, fontSize = 46.sp)
+                        }
+                    }
+                }
+            }
+        }
+        if (incorrect != null) Text("↻", fontSize = 28.sp, color = Color(0xFFCC4455))
+        if (revision > 0) Text("⭐ ${completed.size}/${game.items.size}", fontSize = 22.sp)
+    }
+}
