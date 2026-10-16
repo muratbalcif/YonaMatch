@@ -241,10 +241,9 @@ public struct YonaMatchView: View {
     }
 
     private func resetMatching() {
-        let shapes = [MatchItem(id: "circle", symbol: "●", label: "Daire"), MatchItem(id: "square", symbol: "■", label: "Kare"), MatchItem(id: "triangle", symbol: "▲", label: "Üçgen"), MatchItem(id: "star", symbol: "★", label: "Yıldız"), MatchItem(id: "diamond", symbol: "◆", label: "Elmas")]
-        let colors = [MatchItem(id: "red", symbol: "🔴", label: "Kırmızı"), MatchItem(id: "blue", symbol: "🔵", label: "Mavi"), MatchItem(id: "green", symbol: "🟢", label: "Yeşil"), MatchItem(id: "yellow", symbol: "🟡", label: "Sarı"), MatchItem(id: "purple", symbol: "🟣", label: "Mor")]
-        let count = level <= 5 ? 3 : (level <= 12 ? 4 : 5)
-        matchGame = MatchGame(items: Array((selected == 2 ? shapes : colors).prefix(count)))
+        let type = selected == 2 ? "shape" : "color"
+        let items = (try? MatchLevelRepository.items(type, level: level)) ?? []
+        if !items.isEmpty { matchGame = MatchGame(items: items) }
         matchSelection = nil
         matchFeedback = "Kartı ve hedefini eşleştir."
     }
