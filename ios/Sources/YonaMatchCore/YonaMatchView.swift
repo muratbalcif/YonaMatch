@@ -50,6 +50,31 @@ public struct YonaMatchView: View {
             .clipped()
             .accessibilityLabel(item.label)
     }
+    private struct JoiningVisual: View {
+        let item: MatchItem
+        @State private var joined = false
+
+        var body: some View {
+            HStack(spacing: 0) {
+                half(left: true).offset(x: joined ? 0 : -14)
+                half(left: false).offset(x: joined ? 0 : 14)
+            }
+            .frame(height: 72)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.48)) { joined = true }
+            }
+            .accessibilityLabel(item.label)
+        }
+
+        private func half(left: Bool) -> some View {
+            Text(item.symbol).font(.system(size: 47))
+                .frame(width: 56, height: 62)
+                .offset(x: left ? 14 : -14)
+                .frame(width: 28, height: 62)
+                .clipped()
+        }
+    }
+
     @ViewBuilder private func matchVisual(_ item: MatchItem, faded: Bool = false) -> some View {
         if selected == 3 {
             Circle().fill(matchColor(item.id).opacity(faded ? 0.25 : 1))
@@ -171,7 +196,7 @@ public struct YonaMatchView: View {
                                 Text("✨").font(.system(size: 28))
                                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
                                     ForEach(matchGame.items.filter { matchGame.matched.contains($0.id) }) { solved in
-                                        Text(solved.symbol).font(.system(size: 38))
+                                        JoiningVisual(item: solved)
                                             .padding(10)
                                             .background(Color.mint.opacity(0.3), in: RoundedRectangle(cornerRadius: 18))
                                             .transition(.scale.combined(with: .opacity))
