@@ -1,6 +1,7 @@
 package com.yonamatch.app
 
 import android.os.Bundle
+import com.yonamatch.app.data.GameProgressStore
 import com.yonamatch.app.data.AssociationLevelRepository
 import com.yonamatch.app.data.MatchLevelRepository
 import com.yonamatch.app.data.MatchGame
@@ -138,6 +139,8 @@ private fun YonaMatchApp() {
     val context = LocalContext.current
     val levels = remember(context) { LevelRepository(context).memoryLevels() }
     val progress = remember(context) { ProgressRepository(context) }
+    val gameProgress = remember(context) { GameProgressStore(context) }
+    var resultStars by remember { mutableIntStateOf(3) }
     var page by remember { mutableStateOf("home") }
     var selected by remember { mutableIntStateOf(0) }
     var level by remember { mutableIntStateOf(1) }
@@ -190,7 +193,8 @@ private fun YonaMatchApp() {
             if (next > unlocked) {
                 unlocked = next
             }
-            progress.finish(level, if (attempts <= levels[level - 1].idealAttempts) 3 else 2)
+            resultStars = gameProgress.finish("memory", level, attempts, levels[level - 1].idealAttempts)
+            progress.finish(level, resultStars)
             page = "result"
         }
     }
@@ -269,6 +273,11 @@ private fun YonaMatchApp() {
                                 if (matchGame.complete) {
                                     val next = (level + 1).coerceAtMost(20)
                                     when (selected) { 2 -> shapeUnlocked = maxOf(shapeUnlocked, next); 3 -> colorUnlocked = maxOf(colorUnlocked, next); 4 -> halvesUnlocked = maxOf(halvesUnlocked, next); 5 -> associationUnlocked = maxOf(associationUnlocked, next) }
+                                    resultStars = gameProgress.finish(
+                                        when (selected) { 2 -> "shape"; 3 -> "color"; 4 -> "halves"; else -> "association" },
+                                        level, matchGame.attempts,
+                                        if (selected == 5) associationLevels[level - 1].idealAttempts else matchLevels[level - 1].idealAttempts
+                                    )
                                     matchPrefs.edit().putInt(when (selected) { 2 -> "shape_unlocked"; 3 -> "color_unlocked"; 4 -> "halves_unlocked"; else -> "association_unlocked" }, when (selected) { 2 -> shapeUnlocked; 3 -> colorUnlocked; 4 -> halvesUnlocked; else -> associationUnlocked }).apply()
                                     page = "result"
                                 }
@@ -364,7 +373,7 @@ private fun YonaMatchApp() {
                                         shadowMatches = shadow.matched.size
                                         shadowFeedback = if (success) "Harika, doğru eşleşme!" else "Tekrar deneyelim!"
                                         selectedShadow = null
-                                        if (shadow.isComplete) { shadowUnlocked = maxOf(shadowUnlocked, (level + 1).coerceAtMost(20)); shadowPrefs.edit().putInt("unlocked", shadowUnlocked).apply(); page = "result" }
+                                        if (shadow.isComplete) { shadowUnlocked = maxOf(shadowUnlocked, (level + 1).coerceAtMost(20)); shadowPrefs.edit().putInt("unlocked", shadowUnlocked).apply(); resultStars = gameProgress.finish("shadow", level, shadow.attempts, shadowLevels[level - 1].idealAttempts); page = "result" }
                                         return true
                                     }
                                 } }).clickable(enabled = selectedShadow != null && item.id !in shadow.matched) {
@@ -372,7 +381,7 @@ private fun YonaMatchApp() {
                                     shadowMatches = shadow.matched.size
                                     shadowFeedback = if (success) "Harika, doğru eşleşme!" else "Tekrar deneyelim!"
                                     selectedShadow = null
-                                    if (shadow.isComplete) { shadowUnlocked = maxOf(shadowUnlocked, (level + 1).coerceAtMost(20)); shadowPrefs.edit().putInt("unlocked", shadowUnlocked).apply(); page = "result" }
+                                    if (shadow.isComplete) { shadowUnlocked = maxOf(shadowUnlocked, (level + 1).coerceAtMost(20)); shadowPrefs.edit().putInt("unlocked", shadowUnlocked).apply(); resultStars = gameProgress.finish("shadow", level, shadow.attempts, shadowLevels[level - 1].idealAttempts); page = "result" }
                                 },
                                 color = if (item.id in shadow.matched) mint.copy(alpha = 0.4f) else lavender.copy(alpha = 0.25f),
                                 shape = RoundedCornerShape(16.dp)
@@ -416,7 +425,7 @@ private fun YonaMatchApp() {
                     animationSpec = tween(durationMillis = 480),
                     label = "celebration"
                 )
-                val resultStars = if (selected in 1..5) 3 else if (attempts <= levels[level - 1].idealAttempts) 3 else 2
+                val displayedStars = resultStars
                 Spacer(Modifier.height(24.dp))
                 Surface(
                     color = yellow.copy(alpha = 0.22f),
@@ -432,7 +441,7 @@ private fun YonaMatchApp() {
                             scaleX = celebrationScale
                             scaleY = celebrationScale
                         })
-                        Text("⭐".repeat(resultStars), fontSize = 40.sp)
+                        Text("⭐".repeat(displayedStars), fontSize = 40.sp)
                         Text("🌈  🦁  🎈", fontSize = 42.sp)
                     }
                 }
