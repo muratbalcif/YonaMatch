@@ -15,6 +15,9 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
@@ -64,6 +67,23 @@ private fun HalfVisual(item: MatchItem, left: Boolean) {
         Box(Modifier.offset(x = if (left) 14.dp else (-14).dp).width(56.dp).height(62.dp),
             contentAlignment = Alignment.Center) {
             Text(item.symbol, fontSize = 47.sp)
+        }
+    }
+}
+
+@Composable
+private fun JoiningVisual(item: MatchItem) {
+    var joined by remember(item.id) { mutableStateOf(false) }
+    LaunchedEffect(item.id) { joined = true }
+    val offset by animateFloatAsState(
+        targetValue = if (joined) 0f else 14f,
+        animationSpec = tween(durationMillis = 480),
+        label = "join-halves"
+    )
+    Box(Modifier.height(72.dp).width(86.dp), contentAlignment = Alignment.Center) {
+        Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.offset(x = (-offset).dp)) { HalfVisual(item, left = true) }
+            Box(Modifier.offset(x = offset.dp)) { HalfVisual(item, left = false) }
         }
     }
 }
@@ -256,7 +276,7 @@ private fun YonaMatchApp() {
                                     items(matchGame.items.filter { it.id in matchGame.matched }, key = { it.id }) { solved ->
                                         Surface(color = mint.copy(alpha = 0.3f), shape = RoundedCornerShape(18.dp)) {
                                             Box(Modifier.height(72.dp), contentAlignment = Alignment.Center) {
-                                                Text(solved.symbol, fontSize = 38.sp)
+                                                JoiningVisual(solved)
                                             }
                                         }
                                     }
