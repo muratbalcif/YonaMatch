@@ -1,6 +1,7 @@
 package com.yonamatch.app
 
 import android.os.Bundle
+import com.yonamatch.app.data.AssociationLevelRepository
 import com.yonamatch.app.data.MatchLevelRepository
 import com.yonamatch.app.data.MatchGame
 import com.yonamatch.app.data.MatchItem
@@ -154,7 +155,10 @@ private fun YonaMatchApp() {
     var shadowUnlocked by remember { mutableIntStateOf(shadowPrefs.getInt("unlocked", 1)) }
     var matchRound by remember { mutableIntStateOf(0) }
     val matchLevels = remember(selected, context) { MatchLevelRepository(context).levels(when (selected) { 2 -> "shape"; 3 -> "color"; else -> "halves" }) }
-    val matchItems = remember(selected, level, matchRound) { matchLevels[level - 1].items }
+    val associationLevels = remember(context) { AssociationLevelRepository(context).levels() }
+    val associationPairs = remember(selected, level) { associationLevels[level - 1].pairs }
+    val matchItems = remember(selected, level, matchRound) { if (selected == 5) associationPairs.map { it.source } else matchLevels[level - 1].items }
+    val associationTargets = remember(selected, level) { associationPairs.associate { it.source.id to it.target } }
     val matchGame = remember(selected, level, matchRound) { MatchGame(matchItems) }
     var matchSelection by remember(selected, level, matchRound) { mutableStateOf<String?>(null) }
     var matchCount by remember(selected, level, matchRound) { mutableIntStateOf(0) }
@@ -162,6 +166,7 @@ private fun YonaMatchApp() {
     var shapeUnlocked by remember { mutableIntStateOf(matchPrefs.getInt("shape_unlocked", 1)) }
     var colorUnlocked by remember { mutableIntStateOf(matchPrefs.getInt("color_unlocked", 1)) }
     var halvesUnlocked by remember { mutableIntStateOf(matchPrefs.getInt("halves_unlocked", 1)) }
+    var associationUnlocked by remember { mutableIntStateOf(matchPrefs.getInt("association_unlocked", 1)) }
     var matchFeedback by remember(selected, level, matchRound) { mutableStateOf("Kartı ve hedefini eşleştir.") }
     var shadowRound by remember { mutableIntStateOf(0) }
     val shadowLevels = remember(context) { ShadowLevelRepository(context).levels() }
@@ -191,9 +196,9 @@ private fun YonaMatchApp() {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (page != "home") TextButton(onClick = { page = when(page) { "game", "result" -> "levels"; else -> "home" } }) { Text(if (page == "game" && selected in 2..4) "‹" else "‹ Geri", color = navy, fontSize = if (page == "game" && selected in 2..4) 30.sp else 16.sp) }
+            if (page != "home") TextButton(onClick = { page = when(page) { "game", "result" -> "levels"; else -> "home" } }) { Text(if (page == "game" && selected in 2..5) "‹" else "‹ Geri", color = navy, fontSize = if (page == "game" && selected in 2..4) 30.sp else 16.sp) }
             Spacer(Modifier.weight(1f))
-            if (page != "game" || selected !in 2..4) Text("🧩 YonaMatch", fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = navy)
+            if (page != "game" || selected !in 2..5) Text("🧩 YonaMatch", fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = navy)
             Spacer(Modifier.weight(1f))
         }
         when (page) {
@@ -212,7 +217,7 @@ private fun YonaMatchApp() {
             }
             "levels" -> {
                 Text(modes[selected].emoji + " " + modes[selected].title, fontSize = 23.sp, fontWeight = FontWeight.Bold)
-                if (selected > 4) {
+                if (selected > 5) {
                     Text("Bu oyun yakında hazır olacak. Şimdilik Hafıza Kartları'nı oynayabilirsin.", color = navy)
                     Button(onClick = { selected = 0 }) { Text("Hafıza Kartları") }
                 } else {
@@ -224,8 +229,8 @@ private fun YonaMatchApp() {
                             val isUnlocked = n <= if (selected == 1) shadowUnlocked else unlocked
 
                             Surface(
-                                modifier = Modifier.aspectRatio(1f).clickable(enabled = n <= (when (selected) { 1 -> shadowUnlocked; 2 -> shapeUnlocked; 3 -> colorUnlocked; 4 -> halvesUnlocked; else -> unlocked })) { level = n; when (selected) { 1 -> shadowRound++; 2, 3, 4 -> matchRound++; else -> round++ }; page = "game" },
-                                color = if (n <= (when (selected) { 1 -> shadowUnlocked; 2 -> shapeUnlocked; 3 -> colorUnlocked; else -> unlocked })) yellow.copy(alpha = 0.35f) else Color.LightGray.copy(alpha = 0.25f),
+                                modifier = Modifier.aspectRatio(1f).clickable(enabled = n <= (when (selected) { 1 -> shadowUnlocked; 2 -> shapeUnlocked; 3 -> colorUnlocked; 4 -> halvesUnlocked; 5 -> associationUnlocked; else -> unlocked })) { level = n; when (selected) { 1 -> shadowRound++; 2, 3, 4, 5 -> matchRound++; else -> round++ }; page = "game" },
+                                color = if (n <= (when (selected) { 1 -> shadowUnlocked; 2 -> shapeUnlocked; 3 -> colorUnlocked; 4 -> halvesUnlocked; 5 -> associationUnlocked; else -> unlocked })) yellow.copy(alpha = 0.35f) else Color.LightGray.copy(alpha = 0.25f),
                                 shape = RoundedCornerShape(16.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) { Text(if (n <= (when (selected) { 1 -> shadowUnlocked; 2 -> shapeUnlocked; 3 -> colorUnlocked; else -> unlocked })) "$n ⭐" else "🔒", fontSize = 18.sp) }
@@ -236,7 +241,7 @@ private fun YonaMatchApp() {
             }
             "game" -> {
                 if (selected in 2..4) {
-                    Text(when (selected) { 2 -> "🔺"; 3 -> "🎨"; else -> "🧩" }, fontSize = 30.sp)
+                    Text(when (selected) { 2 -> "🔺"; 3 -> "🎨"; 4 -> "🧩"; else -> "🔗" }, fontSize = 30.sp)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         matchGame.items.forEach { item ->
                             if (item.id !in matchGame.matched) {
@@ -258,8 +263,8 @@ private fun YonaMatchApp() {
                                 matchSelection = null
                                 if (matchGame.complete) {
                                     val next = (level + 1).coerceAtMost(20)
-                                    when (selected) { 2 -> shapeUnlocked = maxOf(shapeUnlocked, next); 3 -> colorUnlocked = maxOf(colorUnlocked, next); 4 -> halvesUnlocked = maxOf(halvesUnlocked, next) }
-                                    matchPrefs.edit().putInt(when (selected) { 2 -> "shape_unlocked"; 3 -> "color_unlocked"; else -> "halves_unlocked" }, when (selected) { 2 -> shapeUnlocked; 3 -> colorUnlocked; else -> halvesUnlocked }).apply()
+                                    when (selected) { 2 -> shapeUnlocked = maxOf(shapeUnlocked, next); 3 -> colorUnlocked = maxOf(colorUnlocked, next); 4 -> halvesUnlocked = maxOf(halvesUnlocked, next); 5 -> associationUnlocked = maxOf(associationUnlocked, next) }
+                                    matchPrefs.edit().putInt(when (selected) { 2 -> "shape_unlocked"; 3 -> "color_unlocked"; 4 -> "halves_unlocked"; else -> "association_unlocked" }, when (selected) { 2 -> shapeUnlocked; 3 -> colorUnlocked; 4 -> halvesUnlocked; else -> associationUnlocked }).apply()
                                     page = "result"
                                 }
                             }
@@ -276,7 +281,7 @@ private fun YonaMatchApp() {
                                 .clickable(enabled = matchSelection != null && item.id !in matchGame.matched) { completeMatch(matchSelection!!) },
                                 color = if (item.id in matchGame.matched) mint.copy(alpha = 0.5f) else lavender.copy(alpha = 0.2f),
                                 shape = RoundedCornerShape(14.dp)) {
-                                Box(contentAlignment = Alignment.Center) { if (item.id in matchGame.matched) Text("✓", fontSize = 32.sp) else if (selected == 4) HalfVisual(item, left = false) else MatchVisual(item, selected == 3, faded = selected == 2) }
+                                Box(contentAlignment = Alignment.Center) { if (item.id in matchGame.matched) Text("✓", fontSize = 32.sp) else if (selected == 4) HalfVisual(item, left = false) else MatchVisual(if (selected == 5) associationTargets.getValue(item.id) else item, selected == 3, faded = selected == 2) }
                             }
                         }
                     }
@@ -377,7 +382,7 @@ private fun YonaMatchApp() {
                 Spacer(Modifier.height(30.dp))
                 Text("🎉", fontSize = 78.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 Text("Harika! Bölümü tamamladın!", fontSize = 26.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                Text("⭐".repeat(if (selected in 1..4) 3 else if (attempts <= levels[level - 1].idealAttempts) 3 else 2), fontSize = 36.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                Text("⭐".repeat(if (selected in 1..5) 3 else if (attempts <= levels[level - 1].idealAttempts) 3 else 2), fontSize = 36.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 if (selected == 0) Text("Deneme sayısı: $attempts", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 Button(onClick = { if (selected == 1) { level = (level + 1).coerceAtMost(20); shadowRound++ } else if (selected in 2..4) { level = (level + 1).coerceAtMost(20); matchRound++ } else { level = (level + 1).coerceAtMost(20); round++ }; page = "game" }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = mint)) { Text("Sonraki Bölüm", color = navy) }
                 OutlinedButton(onClick = { page = "levels" }, modifier = Modifier.fillMaxWidth()) { Text("Seviye Haritası") }
