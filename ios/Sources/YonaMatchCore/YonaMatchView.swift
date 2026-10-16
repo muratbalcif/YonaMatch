@@ -11,6 +11,8 @@ public struct YonaMatchView: View {
     @AppStorage("halves_unlocked") private var halvesUnlocked = 1
     @AppStorage("association_unlocked") private var associationUnlocked = 1
     @State private var associationTargets: [String: MatchItem] = [:]
+    @State private var wrongMatchTarget: String? = nil
+    @State private var wrongMatchToken = UUID()
     @State private var matchGame = MatchGame(items: [.init(id: "circle", symbol: "●", label: "Daire")])
     @State private var matchSelection: String? = nil
     @State private var matchFeedback = "Kartı ve hedefini eşleştir."
@@ -209,12 +211,13 @@ public struct YonaMatchView: View {
                                     submitMatching(source: source, target: item.id)
                                 } label: {
                                     Group {
-                                        if matchGame.matched.contains(item.id) { Text("✓").font(.system(size: 30)) }
+                                        if wrongMatchTarget == item.id { Text("↻").font(.system(size: 30)).foregroundStyle(.red) }
+                                        else if matchGame.matched.contains(item.id) { Text("✓").font(.system(size: 30)) }
                                         else if selected == 4 { halfVisual(item, left: false) }
                                         else { matchVisual(selected == 5 ? (associationTargets[item.id] ?? item) : item, faded: selected == 2) }
                                     }
                                         .frame(maxWidth: .infinity, minHeight: 84)
-                                        .background(matchGame.matched.contains(item.id) ? Color.mint.opacity(0.5) : Color.purple.opacity(0.2), in: RoundedRectangle(cornerRadius: 14))
+                                        .background(matchGame.matched.contains(item.id) ? Color.mint.opacity(0.5) : (wrongMatchTarget == item.id ? Color.red.opacity(0.16) : Color.purple.opacity(0.2)), in: RoundedRectangle(cornerRadius: 14))
                                 }
                                 .disabled(matchGame.matched.contains(item.id))
                                 .onDrop(of: [.plainText], isTargeted: nil) { providers in
@@ -375,12 +378,23 @@ public struct YonaMatchView: View {
         }
         if !items.isEmpty { matchGame = MatchGame(items: items) }
         matchSelection = nil
+        wrongMatchTarget = nil
         matchFeedback = "Kartı ve hedefini eşleştir."
     }
 
     private func submitMatching(source: String, target: String) {
         let correct = matchGame.match(source: source, target: target)
         matchFeedback = correct ? "Harika!" : "Tekrar deneyelim!"
+        if correct {
+            wrongMatchTarget = nil
+        } else {
+            wrongMatchTarget = target
+            let token = UUID()
+            wrongMatchToken = token
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
+                if wrongMatchToken == token { wrongMatchTarget = nil }
+            }
+        }
         matchSelection = nil
         if matchGame.complete {
             if selected == 2 { shapeUnlocked = max(shapeUnlocked, min(20, level + 1)) }
