@@ -200,6 +200,7 @@ public struct YonaMatchView: View {
                         }
                     }
                 case .game:
+                    GameScreenHost(mode: selected) {
                     if selected >= 2 && selected <= 5 {
                         Button {
                             if let source = matchGame.items.first(where: { !matchGame.matched.contains($0.id) }) {
@@ -380,6 +381,7 @@ public struct YonaMatchView: View {
                         }
                     }
                     Button("Yeniden Başlat") { game = makeGame(); memoryHintUsed = false; memoryHintPair = [] }
+                    }
                     }
                 case .result:
                     VStack(spacing: 18) {
