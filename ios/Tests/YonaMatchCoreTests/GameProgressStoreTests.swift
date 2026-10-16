@@ -20,4 +20,20 @@ final class GameProgressStoreTests: XCTestCase {
             XCTAssertEqual(store.unlocked(game), 20)
         }
     }
+
+    func testMigrationPreservesLegacyUnlocksAfterRelaunch() {
+        let suite = "yonamatch-migration-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set(8, forKey: "shadow_unlocked")
+        defaults.set(6, forKey: "association_unlocked")
+        var store = GameProgressStore(storage: defaults)
+        XCTAssertEqual(store.unlocked("shadow"), 8)
+        XCTAssertEqual(store.unlocked("association"), 6)
+        XCTAssertEqual(store.finish("shadow", level: 8, attempts: 3, idealAttempts: 3), 3)
+        store = GameProgressStore(storage: defaults)
+        XCTAssertEqual(store.unlocked("shadow"), 9)
+        XCTAssertEqual(store.bestStars("shadow", level: 8), 3)
+        XCTAssertEqual(store.unlocked("association"), 6)
+    }
 }
