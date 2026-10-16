@@ -61,12 +61,29 @@ private fun matchColor(id: String): Color = when (id) {
     else -> Color.Gray
 }
 
+private fun halfDrawable(id: String): Int? = when (id) {
+    "apple" -> R.drawable.halves_apple
+    "butterfly" -> R.drawable.halves_butterfly
+    "fish" -> R.drawable.halves_fish
+    "car" -> R.drawable.halves_car
+    "house" -> R.drawable.halves_house
+    "flower" -> R.drawable.halves_flower
+    "rocket" -> R.drawable.halves_rocket
+    "turtle" -> R.drawable.halves_turtle
+    else -> null
+}
+
 @Composable
 private fun HalfVisual(item: MatchItem, left: Boolean) {
     Box(Modifier.size(width = 28.dp, height = 62.dp).clipToBounds(), contentAlignment = Alignment.Center) {
         Box(Modifier.offset(x = if (left) 14.dp else (-14).dp).width(56.dp).height(62.dp),
             contentAlignment = Alignment.Center) {
-            Text(item.symbol, fontSize = 47.sp)
+            val drawable = halfDrawable(item.id)
+            if (drawable != null) {
+                Image(painter = painterResource(drawable), contentDescription = item.label, modifier = Modifier.size(56.dp))
+            } else {
+                Text(item.symbol, fontSize = 47.sp)
+            }
         }
     }
 }
