@@ -101,7 +101,7 @@ public struct YonaMatchView: View {
                     }
                 case .game:
                     if selected == 2 || selected == 3 {
-                        Text(selected == 2 ? "🔺 Şekil Eşleştirme" : "🎨 Renk Eşleştirme").font(.title2.bold())
+                        Text(selected == 2 ? "🔺" : "🎨").font(.system(size: 30))
                         HStack(spacing: 8) {
                             ForEach(matchGame.items.filter { !matchGame.matched.contains($0.id) }) { item in
                                 Button { matchSelection = item.id } label: {
