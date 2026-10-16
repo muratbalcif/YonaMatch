@@ -416,17 +416,28 @@ private fun YonaMatchApp() {
                     Text("Eşleşen: $shadowMatches/${shadow.items.size} · Deneme: ${shadow.attempts}")
                     TextButton(onClick = { shadowRound++ }) { Text("Yeniden Başlat") }
                 } else {
+                TextButton(onClick = {
+                    val first = cards.indices.firstOrNull { it !in matched }
+                    if (first != null) {
+                        val second = cards.indices.firstOrNull { it != first && it !in matched && cards[it] == cards[first] }
+                        if (second != null) {
+                            memoryHintUsed = true
+                            memoryHintPair = setOf(first, second)
+                        }
+                    }
+                }) { Text("💡", fontSize = 30.sp) }
                 Text("Hafıza Kartları · Bölüm $level", fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 Text("Çiftleri bul!  ·  Deneme: $attempts  ·  ${matched.size / 2}/${cards.size / 2}")
                 val rows = (cards.size + 3) / 4
                 LazyVerticalGrid(columns = GridCells.Fixed(4), modifier = Modifier.height((rows * 88 + (rows - 1) * 8).dp),
                     userScrollEnabled = false, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     itemsIndexed(cards) { index, symbol ->
-                        val visible = index in opened || index in matched
+                        val visible = index in opened || index in matched || index in memoryHintPair
                         Surface(
                             modifier = Modifier.aspectRatio(1f).clickable(enabled = index !in matched && index !in opened && !mismatch) {
                                 val next = opened + index
                                 if (next.size == 2) {
+                                    memoryHintPair = emptySet()
                                     attempts++
                                     if (cards[next[0]] == cards[next[1]]) {
                                         matched = matched + next
