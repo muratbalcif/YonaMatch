@@ -379,7 +379,6 @@ private fun ModeGrid(onSelect: (Int) -> Unit) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                     Text(mode.emoji, fontSize = 46.sp)
                     Text(mode.title, fontWeight = FontWeight.Bold, color = navy, textAlign = TextAlign.Center, fontSize = 14.sp)
-                    if (index != 0) Text("Yakında", color = navy, fontSize = 11.sp)
                 }
             }
         }
