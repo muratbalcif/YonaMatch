@@ -347,9 +347,9 @@ public struct YonaMatchView: View {
                             memoryHintPair = [first, second]
                         }
                     } label: { Text("💡").font(.system(size: 30)) }
-                    Text("Hafıza Kartları · Bölüm \(level)").font(.title2.bold())
-                    Text("Çiftleri bul! · Deneme: \(game.attempts) · \(game.matched.count / 2)/\(game.cards.count / 2)")
-                    LazyVGrid(columns: columns, spacing: 10) {
+                    let memoryColumns = Array(repeating: GridItem(.flexible(), spacing: 10), count: game.cards.count <= 6 ? 3 : 4)
+                    let memoryRows = (game.cards.count + memoryColumns.count - 1) / memoryColumns.count
+                    LazyVGrid(columns: memoryColumns, spacing: 10) {
                         ForEach(game.cards.indices, id: \.self) { index in
                             Button {
                                 game.select(index)
@@ -372,7 +372,7 @@ public struct YonaMatchView: View {
                                     .contentTransition(.opacity)
                                     .animation(.easeInOut(duration: 0.28), value: game.revealed.contains(index) || game.matched.contains(index))
                                     .font(.system(size: 30))
-                                    .frame(maxWidth: .infinity, minHeight: 72)
+                                    .frame(maxWidth: .infinity, minHeight: memoryRows <= 2 ? 148 : (memoryRows == 3 ? 116 : 88))
                                     .background(game.matched.contains(index) ? Color.mint.opacity(0.4) : Color.blue.opacity(0.25),
                                                 in: RoundedRectangle(cornerRadius: 14))
                             }
