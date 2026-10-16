@@ -303,10 +303,10 @@ fun ShadowPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit)
                             modifier = Modifier.fillMaxWidth().height(104.dp).clickable(enabled = !solved && (!target || selection != null)) {
                                 if (!target) selection = item.id
                                 else selection?.let {
-                                    game.match(it, item.id)
+                                    game.match(sourceId = it, targetId = item.id)
                                     revision++
                                     selection = null
-                                    if (game.complete) onComplete(game.attempts, hintUsed)
+                                    if (game.isComplete) onComplete(game.attempts, hintUsed)
                                 }
                             },
                             color = if (solved) Color(0xFFBDEDD7) else if (!target && selection == item.id) Color(0xFFFFE4A0)
