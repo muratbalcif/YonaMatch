@@ -255,6 +255,7 @@ private fun YonaMatchApp() {
                 }
             }
             "game" -> {
+                val gameContent: @Composable () -> Unit = {
                 if (selected in 2..5) {
                     Text(when (selected) { 2 -> "🔺"; 3 -> "🎨"; 4 -> "🧩"; else -> "🔗" }, fontSize = 30.sp)
                     TextButton(onClick = {
@@ -453,6 +454,15 @@ private fun YonaMatchApp() {
                     }
                 }
                 TextButton(onClick = { round++ }) { Text("↻", fontSize = 32.sp) }
+                }
+                }
+                when (selected) {
+                    0 -> MemoryGameScreen(content = gameContent)
+                    1 -> ShadowGameScreen(content = gameContent)
+                    2 -> ShapeGameScreen(content = gameContent)
+                    3 -> ColorGameScreen(content = gameContent)
+                    4 -> HalvesGameScreen(content = gameContent)
+                    else -> AssociationGameScreen(content = gameContent)
                 }
             }
             "result" -> {
