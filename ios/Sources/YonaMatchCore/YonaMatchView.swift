@@ -8,6 +8,7 @@ public struct YonaMatchView: View {
 
     @AppStorage("shape_unlocked") private var shapeUnlocked = 1
     @AppStorage("color_unlocked") private var colorUnlocked = 1
+    @AppStorage("halves_unlocked") private var halvesUnlocked = 1
     @State private var matchGame = MatchGame(items: [.init(id: "circle", symbol: "●", label: "Daire")])
     @State private var matchSelection: String? = nil
     @State private var matchFeedback = "Kartı ve hedefini eşleştir."
@@ -60,7 +61,7 @@ public struct YonaMatchView: View {
             VStack(alignment: .leading, spacing: 18) {
                 HStack {
                     if page != .home {
-                        Button(page == .game && (selected == 2 || selected == 3) ? "‹" : "‹ Geri") { page = (page == .game || page == .result) ? .levels : .home }
+                        Button(page == .game && (selected == 2 || selected == 3 || selected == 4) ? "‹" : "‹ Geri") { page = (page == .game || page == .result) ? .levels : .home }
                     }
                     Spacer()
                     if page != .game || (selected != 2 && selected != 3) { Text("🧩 YonaMatch").font(.title.bold()).foregroundStyle(navy) }
@@ -88,7 +89,7 @@ public struct YonaMatchView: View {
                                 VStack(spacing: 8) {
                                     Text(modes[index].1).font(.system(size: 44))
                                     Text(modes[index].0).font(.subheadline.bold()).multilineTextAlignment(.center)
-                                    if index > 3 { Text("Yakında").font(.caption) }
+                                    if index > 4 { Text("Yakında").font(.caption) }
                                 }
                                 .frame(maxWidth: .infinity, minHeight: 120)
                                 .foregroundStyle(navy)
@@ -98,7 +99,7 @@ public struct YonaMatchView: View {
                     }
                 case .levels:
                     Text("\(modes[selected].1) \(modes[selected].0)").font(.title2.bold())
-                    if selected > 3 {
+                    if selected > 4 {
                         Text("Bu oyun yakında hazır olacak. Şimdilik Hafıza Kartları'nı oynayabilirsin.")
                         Button("Hafıza Kartları") { selected = 0 }
                     } else {
@@ -110,7 +111,7 @@ public struct YonaMatchView: View {
                                     if selected == 1 { resetShadow() } else if selected == 2 || selected == 3 { resetMatching() } else { game = makeGame() }
                                     page = .game
                                 } label: {
-                                    Text(n <= (selected == 1 ? shadowUnlocked : (selected == 2 ? shapeUnlocked : (selected == 3 ? colorUnlocked : unlocked))) ? "\(n) ⭐" : "🔒")
+                                    Text(n <= (selected == 1 ? shadowUnlocked : (selected == 2 ? shapeUnlocked : (selected == 3 ? colorUnlocked : (selected == 4 ? halvesUnlocked : unlocked)))) ? "\(n) ⭐" : "🔒")
                                         .frame(maxWidth: .infinity, minHeight: 65)
                                         .background((n <= (selected == 1 ? shadowUnlocked : (selected == 2 ? shapeUnlocked : (selected == 3 ? colorUnlocked : unlocked)))) ? Color.yellow.opacity(0.3) : Color.gray.opacity(0.14),
                                                     in: RoundedRectangle(cornerRadius: 16))
@@ -121,7 +122,7 @@ public struct YonaMatchView: View {
                     }
                 case .game:
                     if selected == 2 || selected == 3 {
-                        Text(selected == 2 ? "🔺" : "🎨").font(.system(size: 30))
+                        Text(selected == 2 ? "🔺" : (selected == 3 ? "🎨" : "🧩")).font(.system(size: 30))
                         HStack(spacing: 8) {
                             ForEach(matchGame.items.filter { !matchGame.matched.contains($0.id) }) { item in
                                 Button { matchSelection = item.id } label: {
@@ -260,7 +261,7 @@ public struct YonaMatchView: View {
     }
 
     private func resetMatching() {
-        let type = selected == 2 ? "shape" : "color"
+        let type = selected == 2 ? "shape" : (selected == 3 ? "color" : "halves")
         let items = (try? MatchLevelRepository.items(type, level: level)) ?? []
         if !items.isEmpty { matchGame = MatchGame(items: items) }
         matchSelection = nil
