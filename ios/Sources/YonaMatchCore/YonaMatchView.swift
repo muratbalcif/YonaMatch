@@ -347,15 +347,50 @@ public struct YonaMatchView: View {
                     Button("Yeniden Başlat") { game = makeGame() }
                     }
                 case .result:
-                    Text("🎉").font(.system(size: 76)).frame(maxWidth: .infinity)
-                    Text("Harika! Bölümü tamamladın!").font(.title.bold()).frame(maxWidth: .infinity)
-                    Text(String(repeating: "⭐", count: (selected >= 1 && selected <= 5) ? 3 : (game.attempts <= (levels.first(where: { $0.order == level })?.idealAttempts ?? 3) ? 3 : 2))).font(.largeTitle).frame(maxWidth: .infinity)
-                    if selected == 0 { Text("Deneme sayısı: \(game.attempts)").frame(maxWidth: .infinity) }
-                    Button("Sonraki Bölüm") {
-                        if selected == 1 { level = min(level + 1, 20); resetShadow() } else if selected >= 2 && selected <= 5 { level = min(level + 1, 20); resetMatching() } else { level = min(level + 1, 20); game = makeGame() }
-                        page = .game
-                    }.buttonStyle(.borderedProminent).frame(maxWidth: .infinity)
-                    Button("Seviye Haritası") { page = .levels }.frame(maxWidth: .infinity)
+                    VStack(spacing: 18) {
+                        Text("🎊")
+                            .font(.system(size: 76))
+                            .transition(.scale.combined(with: .opacity))
+                        Text(String(repeating: "⭐", count: (selected >= 1 && selected <= 5) ? 3 : (game.attempts <= (levels.first(where: { $0.order == level })?.idealAttempts ?? 3) ? 3 : 2)))
+                            .font(.system(size: 40))
+                        Text("🌈  🦁  🎈").font(.system(size: 42))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 30)
+                    .background(Color.yellow.opacity(0.2), in: RoundedRectangle(cornerRadius: 32))
+                    HStack(spacing: 12) {
+                        Button {
+                            if selected == 1 { resetShadow() }
+                            else if selected >= 2 && selected <= 5 { resetMatching() }
+                            else { game = makeGame() }
+                            page = .game
+                        } label: {
+                            Text("↻").font(.system(size: 32))
+                                .frame(maxWidth: .infinity, minHeight: 68)
+                        }
+                        .buttonStyle(.bordered)
+                        Button {
+                            if level >= 20 {
+                                page = .levels
+                            } else {
+                                level += 1
+                                if selected == 1 { resetShadow() }
+                                else if selected >= 2 && selected <= 5 { resetMatching() }
+                                else { game = makeGame() }
+                                page = .game
+                            }
+                        } label: {
+                            Text(level == 20 ? "🏠" : "▶").font(.system(size: 34))
+                                .frame(maxWidth: .infinity, minHeight: 68)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    Button { page = .levels } label: {
+                        Text("▦").font(.system(size: 28))
+                            .frame(maxWidth: .infinity, minHeight: 56)
+                    }
+                    .buttonStyle(.bordered)
+
                 }
                 Spacer(minLength: 20)
             }
