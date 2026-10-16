@@ -76,7 +76,7 @@ private fun halfDrawable(id: String): Int? = when (id) {
 }
 
 @Composable
-private fun HalfVisual(item: MatchItem, left: Boolean) {
+internal fun HalfVisual(item: MatchItem, left: Boolean) {
     Box(Modifier.size(width = 28.dp, height = 62.dp).clipToBounds(), contentAlignment = Alignment.Center) {
         Box(Modifier.offset(x = if (left) 14.dp else (-14).dp).width(56.dp).height(62.dp),
             contentAlignment = Alignment.Center) {
@@ -264,6 +264,26 @@ private fun YonaMatchApp() {
                         )
                         matchPrefs.edit().putInt("association_unlocked", associationUnlocked).apply()
                         page = "result"
+                    }
+                } else if (selected in 2..4) {
+                    val onMatchComplete: (Int, Boolean) -> Unit = { completedAttempts, usedHint ->
+                        val type = when (selected) { 2 -> "shape"; 3 -> "color"; else -> "halves" }
+                        resultStars = gameProgress.finish(type, level, completedAttempts, matchLevels[level - 1].idealAttempts, hintsUsed = usedHint)
+                        val next = (level + 1).coerceAtMost(20)
+                        when (selected) {
+                            2 -> shapeUnlocked = maxOf(shapeUnlocked, next)
+                            3 -> colorUnlocked = maxOf(colorUnlocked, next)
+                            4 -> halvesUnlocked = maxOf(halvesUnlocked, next)
+                        }
+                        matchPrefs.edit().putInt("${type}_unlocked", when (selected) {
+                            2 -> shapeUnlocked; 3 -> colorUnlocked; else -> halvesUnlocked
+                        }).apply()
+                        page = "result"
+                    }
+                    when (selected) {
+                        2 -> ShapeGameScreen(level, matchRound, onMatchComplete)
+                        3 -> ColorGameScreen(level, matchRound, onMatchComplete)
+                        else -> HalvesGameScreen(level, matchRound, onMatchComplete)
                     }
                 } else {
                 val gameContent: @Composable () -> Unit = {
