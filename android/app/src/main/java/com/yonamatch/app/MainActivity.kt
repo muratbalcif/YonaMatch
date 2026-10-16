@@ -409,13 +409,67 @@ private fun YonaMatchApp() {
                 }
             }
             "result" -> {
-                Spacer(Modifier.height(30.dp))
-                Text("🎉", fontSize = 78.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-                Text("Harika! Bölümü tamamladın!", fontSize = 26.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                Text("⭐".repeat(if (selected in 1..5) 3 else if (attempts <= levels[level - 1].idealAttempts) 3 else 2), fontSize = 36.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-                if (selected == 0) Text("Deneme sayısı: $attempts", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-                Button(onClick = { if (selected == 1) { level = (level + 1).coerceAtMost(20); shadowRound++ } else if (selected in 2..4) { level = (level + 1).coerceAtMost(20); matchRound++ } else { level = (level + 1).coerceAtMost(20); round++ }; page = "game" }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = mint)) { Text("Sonraki Bölüm", color = navy) }
-                OutlinedButton(onClick = { page = "levels" }, modifier = Modifier.fillMaxWidth()) { Text("Seviye Haritası") }
+                var celebrationVisible by remember(selected, level) { mutableStateOf(false) }
+                LaunchedEffect(selected, level) { celebrationVisible = true }
+                val celebrationScale by animateFloatAsState(
+                    targetValue = if (celebrationVisible) 1f else 0.65f,
+                    animationSpec = tween(durationMillis = 480),
+                    label = "celebration"
+                )
+                val resultStars = if (selected in 1..5) 3 else if (attempts <= levels[level - 1].idealAttempts) 3 else 2
+                Spacer(Modifier.height(24.dp))
+                Surface(
+                    color = yellow.copy(alpha = 0.22f),
+                    shape = RoundedCornerShape(32.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        Modifier.padding(vertical = 30.dp, horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text("🎊", fontSize = 76.sp, modifier = Modifier.graphicsLayer {
+                            scaleX = celebrationScale
+                            scaleY = celebrationScale
+                        })
+                        Text("⭐".repeat(resultStars), fontSize = 40.sp)
+                        Text("🌈  🦁  🎈", fontSize = 42.sp)
+                    }
+                }
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            if (selected == 1) shadowRound++
+                            else if (selected in 2..5) matchRound++
+                            else round++
+                            page = "game"
+                        },
+                        modifier = Modifier.weight(1f).height(68.dp)
+                    ) { Text("↻", fontSize = 32.sp) }
+                    Button(
+                        onClick = {
+                            if (level >= 20) {
+                                page = "levels"
+                            } else {
+                                level++
+                                if (selected == 1) shadowRound++
+                                else if (selected in 2..5) matchRound++
+                                else round++
+                                page = "game"
+                            }
+                        },
+                        modifier = Modifier.weight(2f).height(68.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = mint)
+                    ) { Text(if (level == 20) "🏠" else "▶", fontSize = 34.sp, color = navy) }
+                }
+                OutlinedButton(
+                    onClick = { page = "levels" },
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                ) { Text("▦", fontSize = 28.sp) }
+
             }
         }
     }
