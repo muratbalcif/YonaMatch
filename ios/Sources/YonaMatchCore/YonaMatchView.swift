@@ -169,7 +169,7 @@ public struct YonaMatchView: View {
                         if selected == 4 && !matchGame.matched.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("✨").font(.system(size: 28))
-                                HStack(spacing: 12) {
+                                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
                                     ForEach(matchGame.items.filter { matchGame.matched.contains($0.id) }) { solved in
                                         Text(solved.symbol).font(.system(size: 38))
                                             .padding(10)
