@@ -4,6 +4,8 @@ import SwiftUI
 public struct YonaMatchView: View {
     private let levels = (try? LevelRepository.memoryLevels()) ?? []
     private let progress = ProgressRepository()
+    private let gameProgress = GameProgressStore()
+    @State private var resultStars = 3
     @State private var game = MemoryGame()
 
     @AppStorage("shape_unlocked") private var shapeUnlocked = 1
@@ -288,7 +290,7 @@ public struct YonaMatchView: View {
                                     let correct = shadow.match(sourceId: source, targetId: item.id)
                                     shadowFeedback = correct ? "Harika, doğru eşleşme!" : "Tekrar deneyelim!"
                                     selectedShadow = nil
-                                    if shadow.isComplete { shadowUnlocked = max(shadowUnlocked, min(20, level + 1)); page = .result }
+                                    if shadow.isComplete { shadowUnlocked = max(shadowUnlocked, min(20, level + 1)); resultStars = gameProgress.finish("shadow", level: level, attempts: shadow.attempts, idealAttempts: shadow.items.count); page = .result }
                                 } label: {
                                     Text(shadow.matched.contains(item.id) ? "✓" : item.emoji)
                                         .font(.system(size: 42))
@@ -304,7 +306,7 @@ public struct YonaMatchView: View {
                                         DispatchQueue.main.async {
                                             let correct = shadow.match(sourceId: source, targetId: item.id)
                                             shadowFeedback = correct ? "Harika, doğru eşleşme!" : "Tekrar deneyelim!"
-                                            if shadow.isComplete { shadowUnlocked = max(shadowUnlocked, min(20, level + 1)); page = .result }
+                                            if shadow.isComplete { shadowUnlocked = max(shadowUnlocked, min(20, level + 1)); resultStars = gameProgress.finish("shadow", level: level, attempts: shadow.attempts, idealAttempts: shadow.items.count); page = .result }
                                         }
                                     }
                                     return true
@@ -328,7 +330,8 @@ public struct YonaMatchView: View {
                                 }
                                 if game.isComplete {
                                     let ideal = levels.first(where: { $0.order == level })?.idealAttempts ?? game.cards.count / 2
-                                    progress.finish(level: level, stars: game.attempts <= ideal ? 3 : 2)
+                                    resultStars = gameProgress.finish("memory", level: level, attempts: game.attempts, idealAttempts: ideal)
+                                    progress.finish(level: level, stars: resultStars)
                                     unlocked = progress.unlocked
                                     page = .result
                                 }
@@ -351,7 +354,7 @@ public struct YonaMatchView: View {
                         Text("🎊")
                             .font(.system(size: 76))
                             .transition(.scale.combined(with: .opacity))
-                        Text(String(repeating: "⭐", count: (selected >= 1 && selected <= 5) ? 3 : (game.attempts <= (levels.first(where: { $0.order == level })?.idealAttempts ?? 3) ? 3 : 2)))
+                        Text(String(repeating: "⭐", count: resultStars))
                             .font(.system(size: 40))
                         Text("🌈  🦁  🎈").font(.system(size: 42))
                     }
@@ -432,6 +435,14 @@ public struct YonaMatchView: View {
         }
         matchSelection = nil
         if matchGame.complete {
+            let type = selected == 2 ? "shape" : (selected == 3 ? "color" : (selected == 4 ? "halves" : "association"))
+            let ideal: Int
+            if selected == 5 {
+                ideal = ((try? AssociationLevelRepository.levels()) ?? []).first(where: { $0.order == level })?.idealAttempts ?? matchGame.items.count
+            } else {
+                ideal = ((try? MatchLevelRepository.levels(type)) ?? []).first(where: { $0.order == level })?.idealAttempts ?? matchGame.items.count
+            }
+            resultStars = gameProgress.finish(type, level: level, attempts: matchGame.attempts, idealAttempts: ideal)
             if selected == 2 { shapeUnlocked = max(shapeUnlocked, min(20, level + 1)) }
             else if selected == 3 { colorUnlocked = max(colorUnlocked, min(20, level + 1)) }
             else if selected == 4 { halvesUnlocked = max(halvesUnlocked, min(20, level + 1)) }
