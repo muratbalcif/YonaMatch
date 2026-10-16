@@ -207,6 +207,17 @@ public struct YonaMatchView: View {
                             associationUnlocked = max(associationUnlocked, min(20, level + 1))
                             page = .result
                         }
+                    } else if (2...4).contains(selected) {
+                        PairMatchingPlayScreen(mode: selected, level: level) { attempts, usedHint in
+                            let type = selected == 2 ? "shape" : (selected == 3 ? "color" : "halves")
+                            let ideal = ((try? MatchLevelRepository.levels(type)) ?? []).first(where: { $0.order == level })?.idealAttempts ?? 3
+                            resultStars = gameProgress.finish(type, level: level, attempts: attempts, idealAttempts: ideal, hintsUsed: usedHint)
+                            let next = min(20, level + 1)
+                            if selected == 2 { shapeUnlocked = max(shapeUnlocked, next) }
+                            else if selected == 3 { colorUnlocked = max(colorUnlocked, next) }
+                            else { halvesUnlocked = max(halvesUnlocked, next) }
+                            page = .result
+                        }
                     } else {
                     GameScreenHost(mode: selected) {
                     if selected >= 2 && selected <= 5 {
