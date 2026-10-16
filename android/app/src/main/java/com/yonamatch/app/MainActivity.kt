@@ -154,7 +154,7 @@ private fun YonaMatchApp() {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (page != "home") TextButton(onClick = { page = when(page) { "game", "result" -> "levels"; else -> "home" } }) { Text(if (page == "game" && selected in 2..4) "‹" else "‹ Geri", color = navy, fontSize = if (page == "game" && selected in 2..3) 30.sp else 16.sp) }
+            if (page != "home") TextButton(onClick = { page = when(page) { "game", "result" -> "levels"; else -> "home" } }) { Text(if (page == "game" && selected in 2..4) "‹" else "‹ Geri", color = navy, fontSize = if (page == "game" && selected in 2..4) 30.sp else 16.sp) }
             Spacer(Modifier.weight(1f))
             if (page != "game" || selected !in 2..4) Text("🧩 YonaMatch", fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = navy)
             Spacer(Modifier.weight(1f))
