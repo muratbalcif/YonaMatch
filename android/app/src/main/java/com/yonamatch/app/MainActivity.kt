@@ -1,6 +1,8 @@
 package com.yonamatch.app
 
 import android.os.Bundle
+import com.yonamatch.app.data.MatchGame
+import com.yonamatch.app.data.MatchItem
 import com.yonamatch.app.data.ShadowLevelRepository
 import com.yonamatch.app.data.ShadowGame
 import com.yonamatch.app.data.ShadowItem
@@ -78,6 +80,19 @@ private fun YonaMatchApp() {
     var unlocked by remember { mutableIntStateOf(progress.unlocked()) }
     val shadowPrefs = remember(context) { context.getSharedPreferences("yonamatch_shadow", 0) }
     var shadowUnlocked by remember { mutableIntStateOf(shadowPrefs.getInt("unlocked", 1)) }
+    var matchRound by remember { mutableIntStateOf(0) }
+    val matchItems = remember(selected, level, matchRound) {
+        val shapes = listOf(MatchItem("circle","●","Daire"),MatchItem("square","■","Kare"),MatchItem("triangle","▲","Üçgen"),MatchItem("star","★","Yıldız"),MatchItem("diamond","◆","Elmas"))
+        val colors = listOf(MatchItem("red","🔴","Kırmızı"),MatchItem("blue","🔵","Mavi"),MatchItem("green","🟢","Yeşil"),MatchItem("yellow","🟡","Sarı"),MatchItem("purple","🟣","Mor"))
+        (if (selected == 2) shapes else colors).take(if (level <= 5) 3 else if (level <= 12) 4 else 5)
+    }
+    val matchGame = remember(selected, level, matchRound) { MatchGame(matchItems) }
+    var matchSelection by remember(selected, level, matchRound) { mutableStateOf<String?>(null) }
+    var matchCount by remember(selected, level, matchRound) { mutableIntStateOf(0) }
+    val matchPrefs = remember(context) { context.getSharedPreferences("yonamatch_matching", 0) }
+    var shapeUnlocked by remember { mutableIntStateOf(matchPrefs.getInt("shape_unlocked", 1)) }
+    var colorUnlocked by remember { mutableIntStateOf(matchPrefs.getInt("color_unlocked", 1)) }
+    var matchFeedback by remember(selected, level, matchRound) { mutableStateOf("Kartı ve hedefini eşleştir.") }
     var shadowRound by remember { mutableIntStateOf(0) }
     val shadowLevels = remember(context) { ShadowLevelRepository(context).levels() }
     val shadow = remember(shadowRound, level) { ShadowGame(shadowLevels[level - 1].items) }
@@ -127,7 +142,7 @@ private fun YonaMatchApp() {
             }
             "levels" -> {
                 Text(modes[selected].emoji + " " + modes[selected].title, fontSize = 23.sp, fontWeight = FontWeight.Bold)
-                if (selected > 1) {
+                if (selected > 3) {
                     Text("Bu oyun yakında hazır olacak. Şimdilik Hafıza Kartları'nı oynayabilirsin.", color = navy)
                     Button(onClick = { selected = 0 }) { Text("Hafıza Kartları") }
                 } else {
@@ -137,18 +152,67 @@ private fun YonaMatchApp() {
                         items(20) { index ->
                             val n = index + 1
                             Surface(
-                                modifier = Modifier.aspectRatio(1f).clickable(enabled = n <= (if (selected == 1) shadowUnlocked else unlocked)) { level = n; if (selected == 1) shadowRound++ else round++; page = "game" },
-                                color = if (n <= (if (selected == 1) shadowUnlocked else unlocked)) yellow.copy(alpha = 0.35f) else Color.LightGray.copy(alpha = 0.25f),
+                                modifier = Modifier.aspectRatio(1f).clickable(enabled = n <= (when (selected) { 1 -> shadowUnlocked; 2 -> shapeUnlocked; 3 -> colorUnlocked; else -> unlocked })) { level = n; when (selected) { 1 -> shadowRound++; 2, 3 -> matchRound++; else -> round++ }; page = "game" },
+                                color = if (n <= (when (selected) { 1 -> shadowUnlocked; 2 -> shapeUnlocked; 3 -> colorUnlocked; else -> unlocked })) yellow.copy(alpha = 0.35f) else Color.LightGray.copy(alpha = 0.25f),
                                 shape = RoundedCornerShape(16.dp)
                             ) {
-                                Box(contentAlignment = Alignment.Center) { Text(if (n <= (if (selected == 1) shadowUnlocked else unlocked)) "$n ⭐" else "🔒", fontSize = 18.sp) }
+                                Box(contentAlignment = Alignment.Center) { Text(if (n <= (when (selected) { 1 -> shadowUnlocked; 2 -> shapeUnlocked; 3 -> colorUnlocked; else -> unlocked })) "$n ⭐" else "🔒", fontSize = 18.sp) }
                             }
                         }
                     }
                 }
             }
             "game" -> {
-                if (selected == 1) {
+                if (selected == 2 || selected == 3) {
+                    Text(if (selected == 2) "🔺 Şekil Eşleştirme" else "🎨 Renk Eşleştirme", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    Text(matchFeedback)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        matchGame.items.forEach { item ->
+                            if (item.id !in matchGame.matched) {
+                                Surface(Modifier.weight(1f).height(84.dp).clickable { matchSelection = item.id }
+                                    .dragAndDropSource { startTransfer(DragAndDropTransferData(ClipData.newPlainText("match-id", item.id))) },
+                                    color = if (matchSelection == item.id) yellow else mint.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(14.dp)) {
+                                    Box(contentAlignment = Alignment.Center) { Text(item.symbol, fontSize = 28.sp) }
+                                }
+                            }
+                        }
+                    }
+                    Text("Doğru hedefi seç")
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        matchGame.targets.forEach { item ->
+                            val completeMatch: (String) -> Unit = { source ->
+                                val correct = matchGame.match(source, item.id)
+                                matchCount = matchGame.matched.size
+                                matchFeedback = if (correct) "Harika!" else "Tekrar deneyelim!"
+                                matchSelection = null
+                                if (matchGame.complete) {
+                                    val next = (level + 1).coerceAtMost(20)
+                                    if (selected == 2) shapeUnlocked = maxOf(shapeUnlocked, next) else colorUnlocked = maxOf(colorUnlocked, next)
+                                    matchPrefs.edit().putInt(if (selected == 2) "shape_unlocked" else "color_unlocked", if (selected == 2) shapeUnlocked else colorUnlocked).apply()
+                                    page = "result"
+                                }
+                            }
+                            Surface(Modifier.weight(1f).height(84.dp)
+                                .dragAndDropTarget(shouldStartDragAndDrop = { true }, target = remember(item.id, level, matchRound) {
+                                    object : DragAndDropTarget {
+                                        override fun onDrop(event: DragAndDropEvent): Boolean {
+                                            val source = event.toAndroidDragEvent().clipData?.getItemAt(0)?.text?.toString() ?: return false
+                                            completeMatch(source)
+                                            return true
+                                        }
+                                    }
+                                })
+                                .clickable(enabled = matchSelection != null && item.id !in matchGame.matched) { completeMatch(matchSelection!!) },
+                                color = if (item.id in matchGame.matched) mint.copy(alpha = 0.5f) else lavender.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(14.dp)) {
+                                Box(contentAlignment = Alignment.Center) { Text(if (item.id in matchGame.matched) "✓" else item.label, fontSize = 13.sp, textAlign = TextAlign.Center) }
+                            }
+                        }
+                    }
+                    Text("Eşleşen: $matchCount/${matchGame.items.size} · Deneme: ${matchGame.attempts}")
+                    TextButton(onClick = { matchRound++ }) { Text("Yeniden Başlat") }
+                } else if (selected == 1) {
                     Text("🐘 Gölgesini Bul", fontSize = 24.sp, fontWeight = FontWeight.Bold)
                     Text(shadowFeedback)
                     Text("Hayvanlar", fontWeight = FontWeight.Bold)
@@ -223,9 +287,9 @@ private fun YonaMatchApp() {
                 Spacer(Modifier.height(30.dp))
                 Text("🎉", fontSize = 78.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 Text("Harika! Bölümü tamamladın!", fontSize = 26.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                Text("⭐".repeat(if (selected == 1) 3 else if (attempts <= levels[level - 1].idealAttempts) 3 else 2), fontSize = 36.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-                Text("Deneme sayısı: ${if (selected == 1) shadow.attempts else attempts}", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-                Button(onClick = { if (selected == 1) { level = (level + 1).coerceAtMost(20); shadowRound++ } else { level = (level + 1).coerceAtMost(20); round++ }; page = "game" }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = mint)) { Text("Sonraki Bölüm", color = navy) }
+                Text("⭐".repeat(if (selected in 1..3) 3 else if (attempts <= levels[level - 1].idealAttempts) 3 else 2), fontSize = 36.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                Text("Deneme sayısı: ${if (selected == 1) shadow.attempts else if (selected in 2..3) matchGame.attempts else attempts}", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                Button(onClick = { if (selected == 1) { level = (level + 1).coerceAtMost(20); shadowRound++ } else if (selected in 2..3) { level = (level + 1).coerceAtMost(20); matchRound++ } else { level = (level + 1).coerceAtMost(20); round++ }; page = "game" }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = mint)) { Text("Sonraki Bölüm", color = navy) }
                 OutlinedButton(onClick = { page = "levels" }, modifier = Modifier.fillMaxWidth()) { Text("Seviye Haritası") }
             }
         }
