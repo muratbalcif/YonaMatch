@@ -76,7 +76,7 @@ private fun halfDrawable(id: String): Int? = when (id) {
 }
 
 @Composable
-private fun HalfVisual(item: MatchItem, left: Boolean) {
+internal fun HalfVisual(item: MatchItem, left: Boolean) {
     Box(Modifier.size(width = 28.dp, height = 62.dp).clipToBounds(), contentAlignment = Alignment.Center) {
         Box(Modifier.offset(x = if (left) 14.dp else (-14).dp).width(56.dp).height(62.dp),
             contentAlignment = Alignment.Center) {
@@ -265,217 +265,39 @@ private fun YonaMatchApp() {
                         matchPrefs.edit().putInt("association_unlocked", associationUnlocked).apply()
                         page = "result"
                     }
-                } else {
-                val gameContent: @Composable () -> Unit = {
-                if (selected in 2..5) {
-                    Text(when (selected) { 2 -> "🔺"; 3 -> "🎨"; 4 -> "🧩"; else -> "🔗" }, fontSize = 30.sp)
-                    TextButton(onClick = {
-                        val source = matchGame.items.firstOrNull { it.id !in matchGame.matched }
-                        if (source != null) {
-                            matchHintUsed = true
-                            hintSource = source.id
-                            matchSelection = source.id
+                } else if (selected in 2..4) {
+                    val onMatchComplete: (Int, Boolean) -> Unit = { completedAttempts, usedHint ->
+                        val type = when (selected) { 2 -> "shape"; 3 -> "color"; else -> "halves" }
+                        resultStars = gameProgress.finish(type, level, completedAttempts, matchLevels[level - 1].idealAttempts, hintsUsed = usedHint)
+                        val next = (level + 1).coerceAtMost(20)
+                        when (selected) {
+                            2 -> shapeUnlocked = maxOf(shapeUnlocked, next)
+                            3 -> colorUnlocked = maxOf(colorUnlocked, next)
+                            4 -> halvesUnlocked = maxOf(halvesUnlocked, next)
                         }
-                    }) { Text("💡", fontSize = 30.sp) }
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                    LazyVerticalGrid(columns = GridCells.Fixed(if (matchGame.items.size <= 3) 1 else 2), modifier = Modifier.weight(1f).height(if (matchGame.items.size <= 3) 354.dp else if (matchGame.items.size <= 4) 228.dp else 342.dp), userScrollEnabled = false, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        items(matchGame.items, key = { it.id }) { item ->
-                            run {
-                                Surface(Modifier.fillMaxWidth().height(if (matchGame.items.size <= 3) 110.dp else 108.dp).clickable(enabled = item.id !in matchGame.matched) { matchSelection = item.id }
-                                    .dragAndDropSource { startTransfer(DragAndDropTransferData(ClipData.newPlainText("match-id", item.id))) },
-                                    color = if (item.id in matchGame.matched) mint.copy(alpha = 0.5f) else if (matchSelection == item.id || hintSource == item.id) yellow else mint.copy(alpha = 0.2f),
-                                    shape = RoundedCornerShape(14.dp)) {
-                                    Box(contentAlignment = Alignment.Center) { if (item.id in matchGame.matched) Text("✓", fontSize = 42.sp) else if (selected == 4) HalfVisual(item, left = true) else MatchVisual(item, selected == 3) }
-                                }
-                            }
-                        }
+                        matchPrefs.edit().putInt("${type}_unlocked", when (selected) {
+                            2 -> shapeUnlocked; 3 -> colorUnlocked; else -> halvesUnlocked
+                        }).apply()
+                        page = "result"
                     }
-                    LazyVerticalGrid(columns = GridCells.Fixed(if (matchGame.targets.size <= 3) 1 else 2), modifier = Modifier.weight(1f).height(if (matchGame.targets.size <= 3) 354.dp else if (matchGame.targets.size <= 4) 228.dp else 342.dp), userScrollEnabled = false, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        items(matchGame.targets, key = { it.id }) { item ->
-                            val completedTarget = if (selected == 5) associationTargets.entries.firstOrNull { it.value.id == item.id }?.key ?: item.id else item.id
-                            val completeMatch: (String) -> Unit = { source ->
-                                val correct = matchGame.match(source, item.id)
-                                matchCount = matchGame.matched.size
-                                matchFeedback = if (correct) "Harika!" else "Tekrar deneyelim!"
-                                wrongTarget = if (correct) null else item.id
-                                wrongTick++
-                                hintSource = null
-                                matchSelection = null
-                                if (matchGame.complete) {
-                                    val next = (level + 1).coerceAtMost(20)
-                                    when (selected) { 2 -> shapeUnlocked = maxOf(shapeUnlocked, next); 3 -> colorUnlocked = maxOf(colorUnlocked, next); 4 -> halvesUnlocked = maxOf(halvesUnlocked, next); 5 -> associationUnlocked = maxOf(associationUnlocked, next) }
-                                    resultStars = gameProgress.finish(
-                                        when (selected) { 2 -> "shape"; 3 -> "color"; 4 -> "halves"; else -> "association" },
-                                        level, matchGame.attempts,
-                                        if (selected == 5) associationLevels[level - 1].idealAttempts else matchLevels[level - 1].idealAttempts,
-                                        hintsUsed = matchHintUsed
-                                    )
-                                    matchPrefs.edit().putInt(when (selected) { 2 -> "shape_unlocked"; 3 -> "color_unlocked"; 4 -> "halves_unlocked"; else -> "association_unlocked" }, when (selected) { 2 -> shapeUnlocked; 3 -> colorUnlocked; 4 -> halvesUnlocked; else -> associationUnlocked }).apply()
-                                    page = "result"
-                                }
-                            }
-                            Surface(Modifier.fillMaxWidth().height(if (matchGame.targets.size <= 3) 110.dp else 108.dp)
-                                .dragAndDropTarget(shouldStartDragAndDrop = { true }, target = remember(item.id, level, matchRound) {
-                                    object : DragAndDropTarget {
-                                        override fun onDrop(event: DragAndDropEvent): Boolean {
-                                            val source = event.toAndroidDragEvent().clipData?.getItemAt(0)?.text?.toString() ?: return false
-                                            completeMatch(source)
-                                            return true
-                                        }
-                                    }
-                                })
-                                .clickable(enabled = matchSelection != null && completedTarget !in matchGame.matched) { completeMatch(matchSelection!!) },
-                                color = if (completedTarget in matchGame.matched) mint.copy(alpha = 0.5f) else if (wrongTarget == item.id) Color(0xFFFFD6DC) else lavender.copy(alpha = 0.2f),
-                                shape = RoundedCornerShape(14.dp)) {
-                                Box(contentAlignment = Alignment.Center) { if (wrongTarget == item.id) Text("↻", fontSize = 32.sp) else if (completedTarget in matchGame.matched) Text("✓", fontSize = 32.sp) else if (selected == 4) HalfVisual(item, left = false) else MatchVisual(item, selected == 3, faded = selected == 2) }
-                            }
-                        }
+                    when (selected) {
+                        2 -> ShapeGameScreen(level, matchRound, onMatchComplete)
+                        3 -> ColorGameScreen(level, matchRound, onMatchComplete)
+                        else -> HalvesGameScreen(level, matchRound, onMatchComplete)
                     }
-                    }
-                    if (selected == 5) {
-                        AnimatedVisibility(visible = matchCount > 0) {
-                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                Text("✨", fontSize = 28.sp)
-                                LazyVerticalGrid(
-                                    columns = GridCells.Fixed(2),
-                                    modifier = Modifier.height(220.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                                ) {
-                                    items(matchGame.items.filter { it.id in matchGame.matched }, key = { it.id }) { solved ->
-                                        Surface(color = mint.copy(alpha = 0.25f), shape = RoundedCornerShape(18.dp)) {
-                                            Row(Modifier.height(76.dp).padding(horizontal = 8.dp),
-                                                horizontalArrangement = Arrangement.Center,
-                                                verticalAlignment = Alignment.CenterVertically) {
-                                                Text(solved.symbol, fontSize = 30.sp)
-                                                Text("💚", fontSize = 17.sp)
-                                                Text(associationTargets.getValue(solved.id).symbol, fontSize = 30.sp)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (selected == 4) {
-                        AnimatedVisibility(visible = matchCount > 0) {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("✨", fontSize = 28.sp)
-                                LazyVerticalGrid(
-                                    columns = GridCells.Fixed(3),
-                                    modifier = Modifier.height(170.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                                ) {
-                                    items(matchGame.items.filter { it.id in matchGame.matched }, key = { it.id }) { solved ->
-                                        Surface(color = mint.copy(alpha = 0.3f), shape = RoundedCornerShape(18.dp)) {
-                                            Box(Modifier.height(72.dp), contentAlignment = Alignment.Center) {
-                                                JoiningVisual(solved)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    TextButton(onClick = { matchRound++ }) { Text("↻", fontSize = 30.sp) }
                 } else if (selected == 1) {
-                    Text("🐘 Gölgesini Bul", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                    TextButton(onClick = {
-                        shadow.items.firstOrNull { it.id !in shadow.matched }?.let {
-                            shadowHintUsed = true
-                            shadowHintId = it.id
-                            selectedShadow = it.id
-                        }
-                    }) { Text("💡", fontSize = 30.sp) }
-                    Text(shadowFeedback)
-                    Text("Hayvanlar", fontWeight = FontWeight.Bold)
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        shadow.items.forEach { item ->
-                            if (item.id !in shadow.matched) {
-                                Surface(
-                                    Modifier.weight(1f).height(90.dp).clickable { selectedShadow = item.id }.dragAndDropSource { startTransfer(DragAndDropTransferData(ClipData.newPlainText("shadow-id", item.id))) },
-                                    color = if (selectedShadow == item.id || shadowHintId == item.id) yellow else blue.copy(alpha = 0.2f),
-                                    shape = RoundedCornerShape(16.dp)
-                                ) { Box(contentAlignment = Alignment.Center) { Text(item.emoji, fontSize = 40.sp) } }
-                            }
-                        }
+                    ShadowPlayScreen(level, shadowRound) { completedAttempts, usedHint ->
+                        shadowUnlocked = maxOf(shadowUnlocked, (level + 1).coerceAtMost(20))
+                        resultStars = gameProgress.finish("shadow", level, completedAttempts, shadowLevels[level - 1].idealAttempts, hintsUsed = usedHint)
+                        shadowPrefs.edit().putInt("unlocked", shadowUnlocked).apply()
+                        page = "result"
                     }
-                    Text("Gölgesini seç", fontWeight = FontWeight.Bold)
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        shadow.targets.forEach { item ->
-                            Surface(
-                                Modifier.weight(1f).height(90.dp).dragAndDropTarget(shouldStartDragAndDrop = { true }, target = remember(item.id, shadowRound, level) { object : DragAndDropTarget {
-                                    override fun onDrop(event: DragAndDropEvent): Boolean {
-                                        val clip = event.toAndroidDragEvent().clipData
-                                        val source = clip?.getItemAt(0)?.text?.toString() ?: return false
-                                        val success = shadow.match(source, item.id)
-                                        shadowMatches = shadow.matched.size
-                                        shadowFeedback = if (success) "Harika, doğru eşleşme!" else "Tekrar deneyelim!"
-                                        selectedShadow = null
-                                        if (shadow.isComplete) { shadowUnlocked = maxOf(shadowUnlocked, (level + 1).coerceAtMost(20)); shadowPrefs.edit().putInt("unlocked", shadowUnlocked).apply(); resultStars = gameProgress.finish("shadow", level, shadow.attempts, shadowLevels[level - 1].idealAttempts, hintsUsed = shadowHintUsed); page = "result" }
-                                        return true
-                                    }
-                                } }).clickable(enabled = selectedShadow != null && item.id !in shadow.matched) {
-                                    val success = shadow.match(selectedShadow!!, item.id)
-                                    shadowMatches = shadow.matched.size
-                                    shadowFeedback = if (success) "Harika, doğru eşleşme!" else "Tekrar deneyelim!"
-                                    selectedShadow = null
-                                    if (shadow.isComplete) { shadowUnlocked = maxOf(shadowUnlocked, (level + 1).coerceAtMost(20)); shadowPrefs.edit().putInt("unlocked", shadowUnlocked).apply(); resultStars = gameProgress.finish("shadow", level, shadow.attempts, shadowLevels[level - 1].idealAttempts); page = "result" }
-                                },
-                                color = if (item.id in shadow.matched) mint.copy(alpha = 0.4f) else lavender.copy(alpha = 0.25f),
-                                shape = RoundedCornerShape(16.dp)
-                            ) { Box(contentAlignment = Alignment.Center) { if (item.id in shadow.matched) Text("✓", fontSize = 40.sp) else Image(painter = painterResource(id = when (item.id) { "lion" -> R.drawable.shadow_lion; "elephant" -> R.drawable.shadow_elephant; "rabbit" -> R.drawable.shadow_rabbit; "cat" -> R.drawable.shadow_cat; "dog" -> R.drawable.shadow_dog; "bear" -> R.drawable.shadow_bear; "penguin" -> R.drawable.shadow_penguin; else -> R.drawable.shadow_panda }), contentDescription = "Gölge hedefi", modifier = Modifier.size(65.dp), alpha = 0.75f) } }
-                        }
-                    }
-                    Text("Eşleşen: $shadowMatches/${shadow.items.size} · Deneme: ${shadow.attempts}")
-                    TextButton(onClick = { shadowRound++ }) { Text("Yeniden Başlat") }
                 } else {
-                TextButton(onClick = {
-                    val first = cards.indices.firstOrNull { it !in matched }
-                    if (first != null) {
-                        val second = cards.indices.firstOrNull { it != first && it !in matched && cards[it] == cards[first] }
-                        if (second != null) {
-                            memoryHintUsed = true
-                            memoryHintPair = setOf(first, second)
-                        }
+                    MemoryPlayScreen(level, round) { completedAttempts, usedHint ->
+                        unlocked = maxOf(unlocked, (level + 1).coerceAtMost(20))
+                        resultStars = gameProgress.finish("memory", level, completedAttempts, levels[level - 1].pairs, hintsUsed = usedHint)
+                        page = "result"
                     }
-                }) { Text("💡", fontSize = 30.sp) }
-                val memoryColumns = if (cards.size <= 6) 3 else 4
-                val rows = (cards.size + memoryColumns - 1) / memoryColumns
-                val memoryCardHeight = if (rows <= 2) 148.dp else if (rows == 3) 116.dp else 88.dp
-                LazyVerticalGrid(columns = GridCells.Fixed(memoryColumns), modifier = Modifier.height(memoryCardHeight * rows + 10.dp * (rows - 1)),
-                    userScrollEnabled = false, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    itemsIndexed(cards) { index, symbol ->
-                        val visible = index in opened || index in matched || index in memoryHintPair
-                        Surface(
-                            modifier = Modifier.fillMaxWidth().height(memoryCardHeight).clickable(enabled = index !in matched && index !in opened && !mismatch) {
-                                val next = opened + index
-                                if (next.size == 2) {
-                                    memoryHintPair = emptySet()
-                                    attempts++
-                                    if (cards[next[0]] == cards[next[1]]) {
-                                        matched = matched + next
-                                        opened = emptyList()
-                                    } else { opened = next; mismatch = true }
-                                } else opened = next
-                            },
-                            color = if (index in matched) mint.copy(alpha = 0.4f) else blue.copy(alpha = 0.28f),
-                            shape = RoundedCornerShape(14.dp)
-                        ) { Box(contentAlignment = Alignment.Center) { AnimatedContent(targetState = visible, label = "card-flip") { isOpen -> Text(if (isOpen) symbol else "❔", fontSize = if (rows <= 2) 60.sp else if (rows == 3) 48.sp else 40.sp) } } }
-                    }
-                }
-                TextButton(onClick = { round++ }) { Text("↻", fontSize = 32.sp) }
-                }
-                }
-                when (selected) {
-                    0 -> MemoryGameScreen(content = gameContent)
-                    1 -> ShadowGameScreen(content = gameContent)
-                    2 -> ShapeGameScreen(content = gameContent)
-                    3 -> ColorGameScreen(content = gameContent)
-                    4 -> HalvesGameScreen(content = gameContent)
-                    else -> MemoryGameScreen(content = gameContent)
-                }
                 }
             }
             "result" -> {
@@ -557,7 +379,6 @@ private fun ModeGrid(onSelect: (Int) -> Unit) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                     Text(mode.emoji, fontSize = 46.sp)
                     Text(mode.title, fontWeight = FontWeight.Bold, color = navy, textAlign = TextAlign.Center, fontSize = 14.sp)
-                    if (index != 0) Text("Yakında", color = navy, fontSize = 11.sp)
                 }
             }
         }

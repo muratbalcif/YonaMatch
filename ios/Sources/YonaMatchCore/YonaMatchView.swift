@@ -66,7 +66,7 @@ public struct YonaMatchView: View {
     }
     private static let halfArtIds: Set<String> = ["apple", "butterfly", "fish", "car", "house", "flower", "rocket", "turtle"]
 
-    @ViewBuilder private static func halfArtwork(_ item: MatchItem) -> some View {
+    @ViewBuilder static func halfArtwork(_ item: MatchItem) -> some View {
         if halfArtIds.contains(item.id) {
             HalfArtworkShape(id: item.id)
                 .fill(halfArtworkColor(item.id))
@@ -200,197 +200,39 @@ public struct YonaMatchView: View {
                         }
                     }
                 case .game:
-                    if selected == 5 {
+                    switch selected {
+                    case 0:
+                        MemoryPlayScreen(level: level) { attempts, usedHint in
+                            let ideal = levels.first(where: { $0.order == level })?.pairs ?? 3
+                            resultStars = gameProgress.finish("memory", level: level, attempts: attempts, idealAttempts: ideal, hintsUsed: usedHint)
+                            unlocked = max(unlocked, min(20, level + 1))
+                            page = .result
+                        }
+                    case 1:
+                        ShadowPlayScreen(level: level) { attempts, usedHint in
+                            let ideal = ((try? ShadowLevelRepository.levels()) ?? []).first(where: { $0.order == level })?.idealAttempts ?? 3
+                            resultStars = gameProgress.finish("shadow", level: level, attempts: attempts, idealAttempts: ideal, hintsUsed: usedHint)
+                            shadowUnlocked = max(shadowUnlocked, min(20, level + 1))
+                            page = .result
+                        }
+                    case 2, 3, 4:
+                        PairMatchingPlayScreen(mode: selected, level: level) { attempts, usedHint in
+                            let type = selected == 2 ? "shape" : (selected == 3 ? "color" : "halves")
+                            let ideal = ((try? MatchLevelRepository.levels(type)) ?? []).first(where: { $0.order == level })?.idealAttempts ?? 3
+                            resultStars = gameProgress.finish(type, level: level, attempts: attempts, idealAttempts: ideal, hintsUsed: usedHint)
+                            let next = min(20, level + 1)
+                            if selected == 2 { shapeUnlocked = max(shapeUnlocked, next) }
+                            else if selected == 3 { colorUnlocked = max(colorUnlocked, next) }
+                            else { halvesUnlocked = max(halvesUnlocked, next) }
+                            page = .result
+                        }
+                    default:
                         AssociationPlayScreen(level: level) { attempts, usedHint in
                             let ideal = ((try? AssociationLevelRepository.levels()) ?? []).first(where: { $0.order == level })?.idealAttempts ?? 3
                             resultStars = gameProgress.finish("association", level: level, attempts: attempts, idealAttempts: ideal, hintsUsed: usedHint)
                             associationUnlocked = max(associationUnlocked, min(20, level + 1))
                             page = .result
                         }
-                    } else {
-                    GameScreenHost(mode: selected) {
-                    if selected >= 2 && selected <= 5 {
-                        Button {
-                            if let source = matchGame.items.first(where: { !matchGame.matched.contains($0.id) }) {
-                                matchHintUsed = true
-                                hintSource = source.id
-                                matchSelection = source.id
-                            }
-                        } label: { Text("💡").font(.system(size: 30)) }
-                        Text(selected == 2 ? "🔺" : (selected == 3 ? "🎨" : (selected == 4 ? "🧩" : "🔗"))).font(.system(size: 30))
-                        HStack(alignment: .top, spacing: 12) {
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: matchGame.items.count <= 3 ? 1 : 2), spacing: 10) {
-                            ForEach(matchGame.items) { item in
-                                Button { if !matchGame.matched.contains(item.id) { matchSelection = item.id } } label: {
-                                    Group { if matchGame.matched.contains(item.id) { Text("✓").font(.system(size: 42)) } else if selected == 4 { halfVisual(item, left: true) } else { matchVisual(item) } }
-                                        .frame(maxWidth: .infinity, minHeight: 110)
-                                        .background(matchGame.matched.contains(item.id) ? Color.mint.opacity(0.5) : (matchSelection == item.id ? Color.yellow.opacity(0.5) : Color.mint.opacity(0.2)), in: RoundedRectangle(cornerRadius: 14))
-                                }
-                                .disabled(matchGame.matched.contains(item.id))
-                                .onDrag { NSItemProvider(object: item.id as NSString) }
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: matchGame.targets.count <= 3 ? 1 : 2), spacing: 10) {
-                            ForEach(matchGame.targets) { item in
-                                Button {
-                                    guard let source = matchSelection else { return }
-                                    submitMatching(source: source, target: item.id)
-                                } label: {
-                                    Group {
-                                        if wrongMatchTarget == item.id { Text("↻").font(.system(size: 30)).foregroundStyle(.red) }
-                                        else if matchGame.matched.contains(selected == 5 ? (associationTargets.first(where: { $0.value.id == item.id })?.key ?? item.id) : item.id) { Text("✓").font(.system(size: 30)) }
-                                        else if selected == 4 { halfVisual(item, left: false) }
-                                        else { matchVisual(item, faded: selected == 2) }
-                                    }
-                                        .frame(maxWidth: .infinity, minHeight: 110)
-                                        .background(matchGame.matched.contains(selected == 5 ? (associationTargets.first(where: { $0.value.id == item.id })?.key ?? item.id) : item.id) ? Color.mint.opacity(0.5) : (wrongMatchTarget == item.id ? Color.red.opacity(0.16) : Color.purple.opacity(0.2)), in: RoundedRectangle(cornerRadius: 14))
-                                }
-                                .disabled(matchGame.matched.contains(selected == 5 ? (associationTargets.first(where: { $0.value.id == item.id })?.key ?? item.id) : item.id))
-                                .onDrop(of: [.plainText], isTargeted: nil) { providers in
-                                    guard let provider = providers.first else { return false }
-                                    _ = provider.loadObject(ofClass: NSString.self) { value, _ in
-                                        guard let source = value as? String else { return }
-                                        DispatchQueue.main.async { submitMatching(source: source, target: item.id) }
-                                    }
-                                    return true
-                                }
-                            }
-                        }
-                        }
-                        if selected == 5 && !matchGame.matched.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("✨").font(.system(size: 28))
-                                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 2), spacing: 10) {
-                                    ForEach(matchGame.items.filter { matchGame.matched.contains($0.id) }) { solved in
-                                        HStack(spacing: 3) {
-                                            Text(solved.symbol).font(.system(size: 30))
-                                            Text("💚").font(.system(size: 17))
-                                            Text(associationTargets[solved.id]?.symbol ?? "").font(.system(size: 30))
-                                        }
-                                        .frame(maxWidth: .infinity, minHeight: 76)
-                                        .background(Color.mint.opacity(0.25), in: RoundedRectangle(cornerRadius: 18))
-                                        .transition(.scale.combined(with: .opacity))
-                                    }
-                                }
-                            }
-                            .animation(.spring(response: 0.35, dampingFraction: 0.65), value: matchGame.matched.count)
-                        }
-                        if selected == 4 && !matchGame.matched.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("✨").font(.system(size: 28))
-                                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
-                                    ForEach(matchGame.items.filter { matchGame.matched.contains($0.id) }) { solved in
-                                        JoiningVisual(item: solved)
-                                            .padding(10)
-                                            .background(Color.mint.opacity(0.3), in: RoundedRectangle(cornerRadius: 18))
-                                            .transition(.scale.combined(with: .opacity))
-                                    }
-                                }
-                            }
-                            .animation(.spring(response: 0.35, dampingFraction: 0.65), value: matchGame.matched.count)
-                        }
-                        Button("↻") { resetMatching() }.font(.system(size: 30)).accessibilityLabel("Yeniden başlat")
-                    } else if selected == 1 {
-                        Button {
-                            if let item = shadow.items.first(where: { !shadow.matched.contains($0.id) }) {
-                                shadowHintUsed = true
-                                shadowHintId = item.id
-                                selectedShadow = item.id
-                            }
-                        } label: { Text("💡").font(.system(size: 30)) }
-                        Text("🐘 Gölgesini Bul").font(.title2.bold())
-                        Text(shadowFeedback)
-                        Text("Hayvanlar").font(.headline)
-                        HStack(spacing: 10) {
-                            ForEach(shadow.items.filter { !shadow.matched.contains($0.id) }) { item in
-                                Button {
-                                    selectedShadow = item.id
-                                } label: {
-                                    Text(item.emoji).font(.system(size: 42))
-                                        .frame(maxWidth: .infinity, minHeight: 88)
-                                        .background((selectedShadow == item.id || shadowHintId == item.id) ? Color.yellow.opacity(0.6) : Color.blue.opacity(0.2),
-                                                    in: RoundedRectangle(cornerRadius: 16))
-                                }
-                                .onDrag { NSItemProvider(object: item.id as NSString) }
-                            }
-                        }
-                        Text("Gölgesini seç").font(.headline)
-                        HStack(spacing: 10) {
-                            ForEach(shadow.targets) { item in
-                                Button {
-                                    guard let source = selectedShadow else { return }
-                                    let correct = shadow.match(sourceId: source, targetId: item.id)
-                                    shadowFeedback = correct ? "Harika, doğru eşleşme!" : "Tekrar deneyelim!"
-                                    selectedShadow = nil
-                                    if shadow.isComplete { shadowUnlocked = max(shadowUnlocked, min(20, level + 1)); resultStars = gameProgress.finish("shadow", level: level, attempts: shadow.attempts, idealAttempts: shadow.items.count, hintsUsed: shadowHintUsed); page = .result }
-                                } label: {
-                                    Text(shadow.matched.contains(item.id) ? "✓" : item.emoji)
-                                        .font(.system(size: 42))
-                                        .opacity(shadow.matched.contains(item.id) ? 1 : 0.25)
-                                        .frame(maxWidth: .infinity, minHeight: 88)
-                                        .background(Color.purple.opacity(0.2), in: RoundedRectangle(cornerRadius: 16))
-                                }
-                                .disabled(shadow.matched.contains(item.id))
-                                .onDrop(of: [.plainText], isTargeted: nil) { providers in
-                                    guard let provider = providers.first else { return false }
-                                    _ = provider.loadObject(ofClass: NSString.self) { value, _ in
-                                        guard let source = value as? String else { return }
-                                        DispatchQueue.main.async {
-                                            let correct = shadow.match(sourceId: source, targetId: item.id)
-                                            shadowFeedback = correct ? "Harika, doğru eşleşme!" : "Tekrar deneyelim!"
-                                            if shadow.isComplete { shadowUnlocked = max(shadowUnlocked, min(20, level + 1)); resultStars = gameProgress.finish("shadow", level: level, attempts: shadow.attempts, idealAttempts: shadow.items.count); page = .result }
-                                        }
-                                    }
-                                    return true
-                                }
-                            }
-                        }
-                        Text("Eşleşen: \(shadow.matched.count)/\(shadow.items.count) · Deneme: \(shadow.attempts)")
-                        Button("Yeniden Başlat") { resetShadow() }
-                    } else {
-                    Button {
-                        if let first = game.cards.indices.first(where: { !game.matched.contains($0) }),
-                           let second = game.cards.indices.first(where: { $0 != first && !game.matched.contains($0) && game.cards[$0] == game.cards[first] }) {
-                            memoryHintUsed = true
-                            memoryHintPair = [first, second]
-                        }
-                    } label: { Text("💡").font(.system(size: 30)) }
-                    let memoryColumns = Array(repeating: GridItem(.flexible(), spacing: 10), count: game.cards.count <= 6 ? 3 : 4)
-                    let memoryRows = (game.cards.count + memoryColumns.count - 1) / memoryColumns.count
-                    LazyVGrid(columns: memoryColumns, spacing: 10) {
-                        ForEach(game.cards.indices, id: \.self) { index in
-                            Button {
-                                game.select(index)
-                                if game.revealed.count == 2 { memoryHintPair = [] }
-                                if game.awaitingReset {
-                                    Task { @MainActor in
-                                        try? await Task.sleep(nanoseconds: 900_000_000)
-                                        game.hideMismatch()
-                                    }
-                                }
-                                if game.isComplete {
-                                    let ideal = levels.first(where: { $0.order == level })?.idealAttempts ?? game.cards.count / 2
-                                    resultStars = gameProgress.finish("memory", level: level, attempts: game.attempts, idealAttempts: ideal, hintsUsed: memoryHintUsed)
-                                    progress.finish(level: level, stars: resultStars)
-                                    unlocked = progress.unlocked
-                                    page = .result
-                                }
-                            } label: {
-                                Text(game.revealed.contains(index) || game.matched.contains(index) || memoryHintPair.contains(index) ? game.cards[index] : "❔")
-                                    .contentTransition(.opacity)
-                                    .animation(.easeInOut(duration: 0.28), value: game.revealed.contains(index) || game.matched.contains(index))
-                                    .font(.system(size: memoryRows <= 2 ? 60 : (memoryRows == 3 ? 48 : 40)))
-                                    .frame(maxWidth: .infinity, minHeight: memoryRows <= 2 ? 148 : (memoryRows == 3 ? 116 : 88))
-                                    .background(game.matched.contains(index) ? Color.mint.opacity(0.4) : Color.blue.opacity(0.25),
-                                                in: RoundedRectangle(cornerRadius: 14))
-                            }
-                            .disabled(game.awaitingReset || game.matched.contains(index) || game.revealed.contains(index))
-                        }
-                    }
-                    Button("Yeniden Başlat") { game = makeGame(); memoryHintUsed = false; memoryHintPair = [] }
-                    }
-                    }
                     }
                 case .result:
                     VStack(spacing: 18) {
