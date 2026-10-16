@@ -102,7 +102,6 @@ public struct YonaMatchView: View {
                 case .game:
                     if selected == 2 || selected == 3 {
                         Text(selected == 2 ? "🔺 Şekil Eşleştirme" : "🎨 Renk Eşleştirme").font(.title2.bold())
-                        Text(matchFeedback)
                         HStack(spacing: 8) {
                             ForEach(matchGame.items.filter { !matchGame.matched.contains($0.id) }) { item in
                                 Button { matchSelection = item.id } label: {
@@ -113,15 +112,15 @@ public struct YonaMatchView: View {
                                 .onDrag { NSItemProvider(object: item.id as NSString) }
                             }
                         }
-                        Text("Doğru hedefi seç")
                         HStack(spacing: 8) {
                             ForEach(matchGame.targets) { item in
                                 Button {
                                     guard let source = matchSelection else { return }
                                     submitMatching(source: source, target: item.id)
                                 } label: {
-                                    Text(matchGame.matched.contains(item.id) ? "✓" : item.label)
-                                        .font(.system(size: 13))
+                                    Text(matchGame.matched.contains(item.id) ? "✓" : item.symbol)
+                                        .font(.system(size: 30))
+                                        .opacity(selected == 2 && !matchGame.matched.contains(item.id) ? 0.22 : 1)
                                         .frame(maxWidth: .infinity, minHeight: 84)
                                         .background(matchGame.matched.contains(item.id) ? Color.mint.opacity(0.5) : Color.purple.opacity(0.2), in: RoundedRectangle(cornerRadius: 14))
                                 }
@@ -136,8 +135,7 @@ public struct YonaMatchView: View {
                                 }
                             }
                         }
-                        Text("Eşleşen: \(matchGame.matched.count)/\(matchGame.items.count) · Deneme: \(matchGame.attempts)")
-                        Button("Yeniden Başlat") { resetMatching() }
+                        Button("↻") { resetMatching() }.font(.system(size: 30)).accessibilityLabel("Yeniden başlat")
                     } else if selected == 1 {
                         Text("🐘 Gölgesini Bul").font(.title2.bold())
                         Text(shadowFeedback)
