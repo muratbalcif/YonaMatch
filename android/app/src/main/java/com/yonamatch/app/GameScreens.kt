@@ -193,3 +193,135 @@ private fun PairMatchingScreen(
 
 @Composable fun HalvesGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit) =
     PairMatchingScreen(4, level, round, onComplete)
+
+@Composable
+fun MemoryPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit) {
+    val context = LocalContext.current
+    val levelData = remember(context, level) { com.yonamatch.app.data.LevelRepository(context).memoryLevels()[level - 1] }
+    val cards = remember(level, round) {
+        val icons = listOf("🦁", "🐘", "🐰", "🐼", "🐧", "🐱", "🐶", "🐻").take(levelData.pairs)
+        (icons + icons).shuffled()
+    }
+    var revealed by remember(level, round) { mutableStateOf<List<Int>>(emptyList()) }
+    var matched by remember(level, round) { mutableStateOf<Set<Int>>(emptySet()) }
+    var attempts by remember(level, round) { mutableIntStateOf(0) }
+    var hintUsed by remember(level, round) { mutableStateOf(false) }
+    var hintPair by remember(level, round) { mutableStateOf<Set<Int>>(emptySet()) }
+    var mismatch by remember(level, round) { mutableStateOf(false) }
+    var mismatchToken by remember(level, round) { mutableIntStateOf(0) }
+    LaunchedEffect(mismatchToken) {
+        if (mismatch) {
+            kotlinx.coroutines.delay(850)
+            revealed = emptyList()
+            mismatch = false
+        }
+    }
+    val columns = if (cards.size <= 6) 3 else 4
+    val rows = (cards.size + columns - 1) / columns
+    val cardHeight = if (rows <= 2) 148.dp else if (rows == 3) 116.dp else 88.dp
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text("🦁", fontSize = 32.sp)
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = {
+                val first = cards.indices.firstOrNull { it !in matched }
+                val second = first?.let { f -> cards.indices.firstOrNull { it != f && it !in matched && cards[it] == cards[f] } }
+                if (first != null && second != null) {
+                    hintUsed = true
+                    hintPair = setOf(first, second)
+                }
+            }) { Text("💡", fontSize = 34.sp) }
+        }
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(columns),
+            modifier = Modifier.height(cardHeight * rows + 10.dp * (rows - 1)),
+            userScrollEnabled = false,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(cards.size) { index ->
+                val open = index in revealed || index in matched || index in hintPair
+                Surface(
+                    modifier = Modifier.fillMaxWidth().height(cardHeight).clickable(enabled = index !in matched && index !in revealed && !mismatch) {
+                        val next = revealed + index
+                        if (next.size == 2) {
+                            attempts++
+                            hintPair = emptySet()
+                            if (cards[next[0]] == cards[next[1]]) {
+                                matched = matched + next
+                                revealed = emptyList()
+                                if (matched.size == cards.size) onComplete(attempts, hintUsed)
+                            } else {
+                                revealed = next
+                                mismatch = true
+                                mismatchToken++
+                            }
+                        } else revealed = next
+                    },
+                    color = if (index in matched) Color(0xFFBDEDD7) else Color(0xFFD7EBFF),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(if (open) cards[index] else "❔", fontSize = if (rows <= 2) 60.sp else if (rows == 3) 48.sp else 40.sp)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ShadowPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit) {
+    val context = LocalContext.current
+    val levelData = remember(context, level) { com.yonamatch.app.data.ShadowLevelRepository(context).levels()[level - 1] }
+    val game = remember(level, round) { com.yonamatch.app.data.ShadowGame(levelData.items) }
+    var selection by remember(level, round) { mutableStateOf<String?>(null) }
+    var hintUsed by remember(level, round) { mutableStateOf(false) }
+    var revision by remember(level, round) { mutableIntStateOf(0) }
+    val completed = game.matched.toSet()
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text("🐘", fontSize = 32.sp)
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = {
+                selection = game.items.firstOrNull { it.id !in completed }?.id
+                if (selection != null) hintUsed = true
+            }) { Text("💡", fontSize = 34.sp) }
+        }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            listOf(false, true).forEach { target ->
+                val entries = if (target) game.targets else game.items
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(1),
+                    modifier = Modifier.weight(1f).height(entries.size * 112.dp),
+                    userScrollEnabled = false,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(entries, key = { it.id }) { item ->
+                        val solved = item.id in completed
+                        Surface(
+                            modifier = Modifier.fillMaxWidth().height(104.dp).clickable(enabled = !solved && (!target || selection != null)) {
+                                if (!target) selection = item.id
+                                else selection?.let {
+                                    game.match(it, item.id)
+                                    revision++
+                                    selection = null
+                                    if (game.complete) onComplete(game.attempts, hintUsed)
+                                }
+                            },
+                            color = if (solved) Color(0xFFBDEDD7) else if (!target && selection == item.id) Color(0xFFFFE4A0)
+                                else if (target) Color(0xFFECE6FF) else Color(0xFFE0F7EC),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(if (solved) "✓" else item.emoji, fontSize = 48.sp,
+                                    color = if (target) Color.DarkGray.copy(alpha = 0.4f) else Color.Black)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (revision > 0) Text("⭐ ${completed.size}/${game.items.size}", fontSize = 22.sp)
+    }
+}
