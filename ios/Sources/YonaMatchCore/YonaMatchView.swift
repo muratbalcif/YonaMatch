@@ -17,6 +17,8 @@ public struct YonaMatchView: View {
     @State private var wrongMatchToken = UUID()
     @State private var matchGame = MatchGame(items: [.init(id: "circle", symbol: "●", label: "Daire")])
     @State private var matchSelection: String? = nil
+    @State private var matchHintUsed = false
+    @State private var hintSource: String? = nil
     @State private var matchFeedback = "Kartı ve hedefini eşleştir."
     @AppStorage("shadow_unlocked") private var shadowUnlocked = 1
     @State private var shadow = ShadowGame(items: [
@@ -195,6 +197,13 @@ public struct YonaMatchView: View {
                     }
                 case .game:
                     if selected >= 2 && selected <= 5 {
+                        Button {
+                            if let source = matchGame.items.first(where: { !matchGame.matched.contains($0.id) }) {
+                                matchHintUsed = true
+                                hintSource = source.id
+                                matchSelection = source.id
+                            }
+                        } label: { Text("💡").font(.system(size: 30)) }
                         Text(selected == 2 ? "🔺" : (selected == 3 ? "🎨" : (selected == 4 ? "🧩" : "🔗"))).font(.system(size: 30))
                         HStack(spacing: 8) {
                             ForEach(matchGame.items.filter { !matchGame.matched.contains($0.id) }) { item in
@@ -416,6 +425,8 @@ public struct YonaMatchView: View {
         }
         if !items.isEmpty { matchGame = MatchGame(items: items) }
         matchSelection = nil
+        matchHintUsed = false
+        hintSource = nil
         wrongMatchTarget = nil
         matchFeedback = "Kartı ve hedefini eşleştir."
     }
@@ -434,6 +445,7 @@ public struct YonaMatchView: View {
             }
         }
         matchSelection = nil
+        hintSource = nil
         if matchGame.complete {
             let type = selected == 2 ? "shape" : (selected == 3 ? "color" : (selected == 4 ? "halves" : "association"))
             let ideal: Int
@@ -442,7 +454,7 @@ public struct YonaMatchView: View {
             } else {
                 ideal = ((try? MatchLevelRepository.levels(type)) ?? []).first(where: { $0.order == level })?.idealAttempts ?? matchGame.items.count
             }
-            resultStars = gameProgress.finish(type, level: level, attempts: matchGame.attempts, idealAttempts: ideal)
+            resultStars = gameProgress.finish(type, level: level, attempts: matchGame.attempts, idealAttempts: ideal, hintsUsed: matchHintUsed)
             if selected == 2 { shapeUnlocked = max(shapeUnlocked, min(20, level + 1)) }
             else if selected == 3 { colorUnlocked = max(colorUnlocked, min(20, level + 1)) }
             else if selected == 4 { halvesUnlocked = max(halvesUnlocked, min(20, level + 1)) }
