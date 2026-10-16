@@ -166,7 +166,6 @@ private fun YonaMatchApp() {
             "game" -> {
                 if (selected == 2 || selected == 3) {
                     Text(if (selected == 2) "🔺 Şekil Eşleştirme" else "🎨 Renk Eşleştirme", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                    Text(matchFeedback)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         matchGame.items.forEach { item ->
                             if (item.id !in matchGame.matched) {
@@ -179,7 +178,6 @@ private fun YonaMatchApp() {
                             }
                         }
                     }
-                    Text("Doğru hedefi seç")
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         matchGame.targets.forEach { item ->
                             val completeMatch: (String) -> Unit = { source ->
@@ -207,12 +205,11 @@ private fun YonaMatchApp() {
                                 .clickable(enabled = matchSelection != null && item.id !in matchGame.matched) { completeMatch(matchSelection!!) },
                                 color = if (item.id in matchGame.matched) mint.copy(alpha = 0.5f) else lavender.copy(alpha = 0.2f),
                                 shape = RoundedCornerShape(14.dp)) {
-                                Box(contentAlignment = Alignment.Center) { Text(if (item.id in matchGame.matched) "✓" else item.label, fontSize = 13.sp, textAlign = TextAlign.Center) }
+                                Box(contentAlignment = Alignment.Center) { Text(if (item.id in matchGame.matched) "✓" else item.symbol, fontSize = 30.sp, color = if (selected == 2 && item.id !in matchGame.matched) navy.copy(alpha = 0.22f) else navy) }
                             }
                         }
                     }
-                    Text("Eşleşen: $matchCount/${matchGame.items.size} · Deneme: ${matchGame.attempts}")
-                    TextButton(onClick = { matchRound++ }) { Text("Yeniden Başlat") }
+                    TextButton(onClick = { matchRound++ }) { Text("↻", fontSize = 30.sp) }
                 } else if (selected == 1) {
                     Text("🐘 Gölgesini Bul", fontSize = 24.sp, fontWeight = FontWeight.Bold)
                     Text(shadowFeedback)
