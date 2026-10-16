@@ -253,10 +253,10 @@ public struct YonaMatchView: View {
                 case .result:
                     Text("🎉").font(.system(size: 76)).frame(maxWidth: .infinity)
                     Text("Harika! Bölümü tamamladın!").font(.title.bold()).frame(maxWidth: .infinity)
-                    Text(String(repeating: "⭐", count: (selected >= 1 && selected <= 3) ? 3 : (game.attempts <= (levels.first(where: { $0.order == level })?.idealAttempts ?? 3) ? 3 : 2))).font(.largeTitle).frame(maxWidth: .infinity)
-                    Text("Deneme sayısı: \(selected == 1 ? shadow.attempts : ((selected == 2 || selected == 3) ? matchGame.attempts : game.attempts))").frame(maxWidth: .infinity)
+                    Text(String(repeating: "⭐", count: (selected >= 1 && selected <= 4) ? 3 : (game.attempts <= (levels.first(where: { $0.order == level })?.idealAttempts ?? 3) ? 3 : 2))).font(.largeTitle).frame(maxWidth: .infinity)
+                    if selected == 0 { Text("Deneme sayısı: \(game.attempts)").frame(maxWidth: .infinity) }
                     Button("Sonraki Bölüm") {
-                        if selected == 1 { level = min(level + 1, 20); resetShadow() } else if selected == 2 || selected == 3 { level = min(level + 1, 20); resetMatching() } else { level = min(level + 1, 20); game = makeGame() }
+                        if selected == 1 { level = min(level + 1, 20); resetShadow() } else if selected >= 2 && selected <= 4 { level = min(level + 1, 20); resetMatching() } else { level = min(level + 1, 20); game = makeGame() }
                         page = .game
                     }.buttonStyle(.borderedProminent).frame(maxWidth: .infinity)
                     Button("Seviye Haritası") { page = .levels }.frame(maxWidth: .infinity)
