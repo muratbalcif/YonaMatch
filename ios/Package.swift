@@ -5,5 +5,8 @@ let package = Package(
     name: "YonaMatchCore",
     platforms: [.iOS(.v16)],
     products: [.library(name: "YonaMatchCore", targets: ["YonaMatchCore"])],
-    targets: [.target(name: "YonaMatchCore"), .testTarget(name: "YonaMatchCoreTests", dependencies: ["YonaMatchCore"])]
+    targets: [
+        .target(name: "YonaMatchCore", resources: [.process("Resources")]),
+        .testTarget(name: "YonaMatchCoreTests", dependencies: ["YonaMatchCore"])
+    ]
 )
