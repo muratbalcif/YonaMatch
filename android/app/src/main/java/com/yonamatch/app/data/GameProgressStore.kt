@@ -10,7 +10,7 @@ class GameProgressStore(context: Context) {
     init {
         if (!prefs.getBoolean("migration_v1_complete", false)) {
             val editor = prefs.edit()
-            val legacyMatches = context.getSharedPreferences("yonamatch_match", Context.MODE_PRIVATE)
+            val legacyMatches = context.getSharedPreferences("yonamatch_matching", Context.MODE_PRIVATE)
             val legacyShadow = context.getSharedPreferences("yonamatch_shadow", Context.MODE_PRIVATE)
             for (game in names) {
                 val old = when (game) {
