@@ -187,7 +187,7 @@ public struct YonaMatchView: View {
                             ForEach(1...20, id: \.self) { n in
                                 Button {
                                     level = n
-                                    if selected == 1 { resetShadow() } else if selected >= 2 && selected <= 5 { resetMatching() } else { game = makeGame() }
+                                    if selected == 1 { resetShadow() } else if selected >= 2 && selected <= 5 { resetMatching() } else { game = makeGame(); memoryHintUsed = false; memoryHintPair = [] }
                                     page = .game
                                 } label: {
                                     Text(n <= unlockedLevel(for: selected) ? "\(n)" + (gameProgress.bestStars(["memory", "shadow", "shape", "color", "halves", "association"][selected], level: n) > 0 ? " " + String(repeating: "⭐", count: gameProgress.bestStars(["memory", "shadow", "shape", "color", "halves", "association"][selected], level: n)) : "") : "🔒")
@@ -375,7 +375,7 @@ public struct YonaMatchView: View {
                             .disabled(game.awaitingReset || game.matched.contains(index) || game.revealed.contains(index))
                         }
                     }
-                    Button("Yeniden Başlat") { game = makeGame() }
+                    Button("Yeniden Başlat") { game = makeGame(); memoryHintUsed = false; memoryHintPair = [] }
                     }
                 case .result:
                     VStack(spacing: 18) {
@@ -393,7 +393,7 @@ public struct YonaMatchView: View {
                         Button {
                             if selected == 1 { resetShadow() }
                             else if selected >= 2 && selected <= 5 { resetMatching() }
-                            else { game = makeGame() }
+                            else { game = makeGame(); memoryHintUsed = false; memoryHintPair = [] }
                             page = .game
                         } label: {
                             Text("↻").font(.system(size: 32))
@@ -407,7 +407,7 @@ public struct YonaMatchView: View {
                                 level += 1
                                 if selected == 1 { resetShadow() }
                                 else if selected >= 2 && selected <= 5 { resetMatching() }
-                                else { game = makeGame() }
+                                else { game = makeGame(); memoryHintUsed = false; memoryHintPair = [] }
                                 page = .game
                             }
                         } label: {
