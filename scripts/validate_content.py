@@ -35,7 +35,7 @@ for platform_path in [
     assert json.loads((root / platform_path).read_text()) == shadow, platform_path
 print("Shadow validation passed: 20 levels, both platforms")
 
-for game_type in ("shape", "color"):
+for game_type in ("shape", "color", "halves"):
     content = json.loads((root / f"shared-content/levels/{game_type}.json").read_text())
     assert content["schemaVersion"] == 1 and content["gameType"] == game_type
     assert len(content["levels"]) == 20
