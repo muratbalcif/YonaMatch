@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.ui.draganddrop.dragAndDropSource
 import androidx.compose.ui.draganddrop.dragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTarget
@@ -93,7 +94,6 @@ private fun YonaMatchApp() {
             val next = (level + 1).coerceAtMost(20)
             if (next > unlocked) {
                 unlocked = next
-                progress.finish(level, if (attempts <= levels[level - 1].idealAttempts) 3 else 2)
             }
             progress.finish(level, if (attempts <= levels[level - 1].idealAttempts) 3 else 2)
             page = "result"
@@ -211,7 +211,7 @@ private fun YonaMatchApp() {
                             },
                             color = if (index in matched) mint.copy(alpha = 0.4f) else blue.copy(alpha = 0.28f),
                             shape = RoundedCornerShape(14.dp)
-                        ) { Box(contentAlignment = Alignment.Center) { androidx.compose.animation.AnimatedContent(targetState = visible, label = "card-flip") { isOpen -> Text(if (isOpen) symbol else "❔", fontSize = 29.sp) } } }
+                        ) { Box(contentAlignment = Alignment.Center) { AnimatedContent(targetState = visible, label = "card-flip") { isOpen -> Text(if (isOpen) symbol else "❔", fontSize = 29.sp) } } }
                     }
                 }
                 TextButton(onClick = { round++ }) { Text("Yeniden Başlat") }
