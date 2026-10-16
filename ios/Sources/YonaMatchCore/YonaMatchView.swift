@@ -42,6 +42,14 @@ public struct YonaMatchView: View {
         default: return .gray
         }
     }
+    @ViewBuilder private func halfVisual(_ item: MatchItem, left: Bool) -> some View {
+        Text(item.symbol).font(.system(size: 47))
+            .frame(width: 52, height: 62)
+            .mask(alignment: left ? .leading : .trailing) {
+                Rectangle().frame(width: 26, height: 62)
+            }
+            .accessibilityLabel(item.label)
+    }
     @ViewBuilder private func matchVisual(_ item: MatchItem, faded: Bool = false) -> some View {
         if selected == 3 {
             Circle().fill(matchColor(item.id).opacity(faded ? 0.25 : 1))
@@ -126,7 +134,7 @@ public struct YonaMatchView: View {
                         HStack(spacing: 8) {
                             ForEach(matchGame.items.filter { !matchGame.matched.contains($0.id) }) { item in
                                 Button { matchSelection = item.id } label: {
-                                    matchVisual(item)
+                                    Group { if selected == 4 { halfVisual(item, left: true) } else { matchVisual(item) } }
                                         .frame(maxWidth: .infinity, minHeight: 84)
                                         .background(matchSelection == item.id ? Color.yellow.opacity(0.5) : Color.mint.opacity(0.2), in: RoundedRectangle(cornerRadius: 14))
                                 }
@@ -141,6 +149,7 @@ public struct YonaMatchView: View {
                                 } label: {
                                     Group {
                                         if matchGame.matched.contains(item.id) { Text("✓").font(.system(size: 30)) }
+                                        else if selected == 4 { halfVisual(item, left: false) }
                                         else { matchVisual(item, faded: selected == 2) }
                                     }
                                         .frame(maxWidth: .infinity, minHeight: 84)
