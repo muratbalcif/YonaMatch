@@ -205,17 +205,17 @@ public struct YonaMatchView: View {
                             }
                         } label: { Text("💡").font(.system(size: 30)) }
                         Text(selected == 2 ? "🔺" : (selected == 3 ? "🎨" : (selected == 4 ? "🧩" : "🔗"))).font(.system(size: 30))
-                        HStack(spacing: 8) {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: matchGame.items.count <= 4 ? 2 : 3), spacing: 10) {
                             ForEach(matchGame.items.filter { !matchGame.matched.contains($0.id) }) { item in
                                 Button { matchSelection = item.id } label: {
                                     Group { if selected == 4 { halfVisual(item, left: true) } else { matchVisual(item) } }
-                                        .frame(maxWidth: .infinity, minHeight: 84)
+                                        .frame(maxWidth: .infinity, minHeight: matchGame.items.count <= 4 ? 108 : 92)
                                         .background(matchSelection == item.id ? Color.yellow.opacity(0.5) : Color.mint.opacity(0.2), in: RoundedRectangle(cornerRadius: 14))
                                 }
                                 .onDrag { NSItemProvider(object: item.id as NSString) }
                             }
                         }
-                        HStack(spacing: 8) {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: matchGame.targets.count <= 4 ? 2 : 3), spacing: 10) {
                             ForEach(matchGame.targets) { item in
                                 Button {
                                     guard let source = matchSelection else { return }
@@ -227,7 +227,7 @@ public struct YonaMatchView: View {
                                         else if selected == 4 { halfVisual(item, left: false) }
                                         else { matchVisual(selected == 5 ? (associationTargets[item.id] ?? item) : item, faded: selected == 2) }
                                     }
-                                        .frame(maxWidth: .infinity, minHeight: 84)
+                                        .frame(maxWidth: .infinity, minHeight: matchGame.targets.count <= 4 ? 108 : 92)
                                         .background(matchGame.matched.contains(item.id) ? Color.mint.opacity(0.5) : (wrongMatchTarget == item.id ? Color.red.opacity(0.16) : Color.purple.opacity(0.2)), in: RoundedRectangle(cornerRadius: 14))
                                 }
                                 .disabled(matchGame.matched.contains(item.id))
