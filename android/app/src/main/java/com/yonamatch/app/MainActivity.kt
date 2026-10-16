@@ -29,6 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.draganddrop.dragAndDropSource
@@ -58,14 +60,11 @@ private fun matchColor(id: String): Color = when (id) {
 
 @Composable
 private fun HalfVisual(item: MatchItem, left: Boolean) {
-    Box(Modifier.size(width = 52.dp, height = 62.dp)
-        .drawWithContent {
-            val middle = size.width / 2f
-            clipRect(left = if (left) 0f else middle, right = if (left) middle else size.width) {
-                this@drawWithContent.drawContent()
-            }
-        }, contentAlignment = Alignment.Center) {
-        Text(item.symbol, fontSize = 47.sp)
+    Box(Modifier.size(width = 28.dp, height = 62.dp).clipToBounds(), contentAlignment = Alignment.Center) {
+        Box(Modifier.offset(x = if (left) 14.dp else (-14).dp).width(56.dp).height(62.dp),
+            contentAlignment = Alignment.Center) {
+            Text(item.symbol, fontSize = 47.sp)
+        }
     }
 }
 
