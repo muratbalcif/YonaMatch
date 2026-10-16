@@ -265,10 +265,11 @@ private fun YonaMatchApp() {
                             matchSelection = source.id
                         }
                     }) { Text("💡", fontSize = 30.sp) }
-                    LazyVerticalGrid(columns = GridCells.Fixed(if (matchGame.items.size <= 4) 2 else 3), modifier = Modifier.height(if (matchGame.items.size <= 4) 228.dp else 300.dp), userScrollEnabled = false, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    LazyVerticalGrid(columns = GridCells.Fixed(if (matchGame.items.size <= 3) 1 else 2), modifier = Modifier.weight(1f).height(if (matchGame.items.size <= 3) 354.dp else if (matchGame.items.size <= 4) 228.dp else 342.dp), userScrollEnabled = false, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         items(matchGame.items, key = { it.id }) { item ->
                             if (item.id !in matchGame.matched) {
-                                Surface(Modifier.fillMaxWidth().height(if (matchGame.items.size <= 4) 108.dp else 92.dp).clickable { matchSelection = item.id }
+                                Surface(Modifier.fillMaxWidth().height(if (matchGame.items.size <= 3) 110.dp else 108.dp).clickable { matchSelection = item.id }
                                     .dragAndDropSource { startTransfer(DragAndDropTransferData(ClipData.newPlainText("match-id", item.id))) },
                                     color = if (matchSelection == item.id || hintSource == item.id) yellow else mint.copy(alpha = 0.2f),
                                     shape = RoundedCornerShape(14.dp)) {
@@ -277,7 +278,7 @@ private fun YonaMatchApp() {
                             }
                         }
                     }
-                    LazyVerticalGrid(columns = GridCells.Fixed(if (matchGame.targets.size <= 4) 2 else 3), modifier = Modifier.height(if (matchGame.targets.size <= 4) 228.dp else 300.dp), userScrollEnabled = false, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    LazyVerticalGrid(columns = GridCells.Fixed(if (matchGame.targets.size <= 3) 1 else 2), modifier = Modifier.weight(1f).height(if (matchGame.targets.size <= 3) 354.dp else if (matchGame.targets.size <= 4) 228.dp else 342.dp), userScrollEnabled = false, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         items(matchGame.targets, key = { it.id }) { item ->
                             val completeMatch: (String) -> Unit = { source ->
                                 val correct = matchGame.match(source, item.id)
@@ -300,7 +301,7 @@ private fun YonaMatchApp() {
                                     page = "result"
                                 }
                             }
-                            Surface(Modifier.fillMaxWidth().height(if (matchGame.targets.size <= 4) 108.dp else 92.dp)
+                            Surface(Modifier.fillMaxWidth().height(if (matchGame.targets.size <= 3) 110.dp else 108.dp)
                                 .dragAndDropTarget(shouldStartDragAndDrop = { true }, target = remember(item.id, level, matchRound) {
                                     object : DragAndDropTarget {
                                         override fun onDrop(event: DragAndDropEvent): Boolean {
@@ -316,6 +317,7 @@ private fun YonaMatchApp() {
                                 Box(contentAlignment = Alignment.Center) { if (wrongTarget == item.id) Text("↻", fontSize = 32.sp) else if (item.id in matchGame.matched) Text("✓", fontSize = 32.sp) else if (selected == 4) HalfVisual(item, left = false) else MatchVisual(if (selected == 5) associationTargets.getValue(item.id) else item, selected == 3, faded = selected == 2) }
                             }
                         }
+                    }
                     }
                     if (selected == 5) {
                         AnimatedVisibility(visible = matchCount > 0) {
