@@ -165,7 +165,7 @@ private fun YonaMatchApp() {
             }
             "game" -> {
                 if (selected == 2 || selected == 3) {
-                    Text(if (selected == 2) "🔺 Şekil Eşleştirme" else "🎨 Renk Eşleştirme", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    Text(if (selected == 2) "🔺" else "🎨", fontSize = 30.sp)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         matchGame.items.forEach { item ->
                             if (item.id !in matchGame.matched) {
