@@ -371,7 +371,7 @@ public struct YonaMatchView: View {
                                 Text(game.revealed.contains(index) || game.matched.contains(index) || memoryHintPair.contains(index) ? game.cards[index] : "❔")
                                     .contentTransition(.opacity)
                                     .animation(.easeInOut(duration: 0.28), value: game.revealed.contains(index) || game.matched.contains(index))
-                                    .font(.system(size: 30))
+                                    .font(.system(size: memoryRows <= 2 ? 60 : (memoryRows == 3 ? 48 : 40)))
                                     .frame(maxWidth: .infinity, minHeight: memoryRows <= 2 ? 148 : (memoryRows == 3 ? 116 : 88))
                                     .background(game.matched.contains(index) ? Color.mint.opacity(0.4) : Color.blue.opacity(0.25),
                                                 in: RoundedRectangle(cornerRadius: 14))
