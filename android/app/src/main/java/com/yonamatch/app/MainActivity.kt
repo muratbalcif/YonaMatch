@@ -268,12 +268,12 @@ private fun YonaMatchApp() {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                     LazyVerticalGrid(columns = GridCells.Fixed(if (matchGame.items.size <= 3) 1 else 2), modifier = Modifier.weight(1f).height(if (matchGame.items.size <= 3) 354.dp else if (matchGame.items.size <= 4) 228.dp else 342.dp), userScrollEnabled = false, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         items(matchGame.items, key = { it.id }) { item ->
-                            if (item.id !in matchGame.matched) {
-                                Surface(Modifier.fillMaxWidth().height(if (matchGame.items.size <= 3) 110.dp else 108.dp).clickable { matchSelection = item.id }
+                            run {
+                                Surface(Modifier.fillMaxWidth().height(if (matchGame.items.size <= 3) 110.dp else 108.dp).clickable(enabled = item.id !in matchGame.matched) { matchSelection = item.id }
                                     .dragAndDropSource { startTransfer(DragAndDropTransferData(ClipData.newPlainText("match-id", item.id))) },
-                                    color = if (matchSelection == item.id || hintSource == item.id) yellow else mint.copy(alpha = 0.2f),
+                                    color = if (item.id in matchGame.matched) mint.copy(alpha = 0.5f) else if (matchSelection == item.id || hintSource == item.id) yellow else mint.copy(alpha = 0.2f),
                                     shape = RoundedCornerShape(14.dp)) {
-                                    Box(contentAlignment = Alignment.Center) { if (selected == 4) HalfVisual(item, left = true) else MatchVisual(item, selected == 3) }
+                                    Box(contentAlignment = Alignment.Center) { if (item.id in matchGame.matched) Text("✓", fontSize = 42.sp) else if (selected == 4) HalfVisual(item, left = true) else MatchVisual(item, selected == 3) }
                                 }
                             }
                         }
