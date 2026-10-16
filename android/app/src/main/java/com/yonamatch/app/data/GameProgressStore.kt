@@ -7,6 +7,23 @@ class GameProgressStore(context: Context) {
     private val prefs = context.getSharedPreferences("yonamatch_game_progress_v1", Context.MODE_PRIVATE)
     private val names = setOf("memory", "shadow", "shape", "color", "halves", "association")
 
+    init {
+        if (!prefs.getBoolean("migration_v1_complete", false)) {
+            val editor = prefs.edit()
+            val legacyMatches = context.getSharedPreferences("yonamatch_match", Context.MODE_PRIVATE)
+            val legacyShadow = context.getSharedPreferences("yonamatch_shadow", Context.MODE_PRIVATE)
+            for (game in names) {
+                val old = when (game) {
+                    "shadow" -> legacyShadow.getInt("unlocked", 1)
+                    "memory" -> context.getSharedPreferences("yonamatch_progress", Context.MODE_PRIVATE).getInt("unlocked", 1)
+                    else -> legacyMatches.getInt("${game}_unlocked", 1)
+                }
+                editor.putInt("${game}_unlocked", maxOf(prefs.getInt("${game}_unlocked", 1), old).coerceIn(1, 20))
+            }
+            editor.putBoolean("migration_v1_complete", true).apply()
+        }
+    }
+
     fun unlocked(game: String): Int {
         require(game in names)
         return prefs.getInt("${game}_unlocked", 1).coerceIn(1, 20)
