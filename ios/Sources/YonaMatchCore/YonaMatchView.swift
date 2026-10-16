@@ -200,6 +200,14 @@ public struct YonaMatchView: View {
                         }
                     }
                 case .game:
+                    if selected == 5 {
+                        AssociationPlayScreen(level: level) { attempts, usedHint in
+                            let ideal = ((try? AssociationLevelRepository.levels()) ?? []).first(where: { $0.order == level })?.idealAttempts ?? 3
+                            resultStars = gameProgress.finish("association", level: level, attempts: attempts, idealAttempts: ideal, hintsUsed: usedHint)
+                            associationUnlocked = max(associationUnlocked, min(20, level + 1))
+                            page = .result
+                        }
+                    } else {
                     GameScreenHost(mode: selected) {
                     if selected >= 2 && selected <= 5 {
                         Button {
@@ -381,6 +389,7 @@ public struct YonaMatchView: View {
                         }
                     }
                     Button("Yeniden Başlat") { game = makeGame(); memoryHintUsed = false; memoryHintPair = [] }
+                    }
                     }
                     }
                 case .result:

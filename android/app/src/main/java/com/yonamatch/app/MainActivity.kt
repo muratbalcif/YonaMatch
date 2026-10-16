@@ -255,6 +255,17 @@ private fun YonaMatchApp() {
                 }
             }
             "game" -> {
+                if (selected == 5) {
+                    AssociationGameScreen(level = level, round = matchRound) { completedAttempts, usedHint ->
+                        associationUnlocked = maxOf(associationUnlocked, (level + 1).coerceAtMost(20))
+                        resultStars = gameProgress.finish(
+                            "association", level, completedAttempts,
+                            associationLevels[level - 1].idealAttempts, hintsUsed = usedHint
+                        )
+                        matchPrefs.edit().putInt("association_unlocked", associationUnlocked).apply()
+                        page = "result"
+                    }
+                } else {
                 val gameContent: @Composable () -> Unit = {
                 if (selected in 2..5) {
                     Text(when (selected) { 2 -> "🔺"; 3 -> "🎨"; 4 -> "🧩"; else -> "🔗" }, fontSize = 30.sp)
@@ -463,7 +474,8 @@ private fun YonaMatchApp() {
                     2 -> ShapeGameScreen(content = gameContent)
                     3 -> ColorGameScreen(content = gameContent)
                     4 -> HalvesGameScreen(content = gameContent)
-                    else -> AssociationGameScreen(content = gameContent)
+                    else -> MemoryGameScreen(content = gameContent)
+                }
                 }
             }
             "result" -> {
