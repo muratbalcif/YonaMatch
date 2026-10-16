@@ -5,12 +5,7 @@ public struct YonaMatchView: View {
     private let levels = (try? LevelRepository.memoryLevels()) ?? []
     private let progress = ProgressRepository()
     @State private var game = MemoryGame()
-    private let shadowCatalog: [ShadowItem] = [
-        .init(id: "lion", emoji: "🦁", label: "Aslan"), .init(id: "elephant", emoji: "🐘", label: "Fil"),
-        .init(id: "rabbit", emoji: "🐰", label: "Tavşan"), .init(id: "cat", emoji: "🐱", label: "Kedi"),
-        .init(id: "dog", emoji: "🐶", label: "Köpek"), .init(id: "bear", emoji: "🐻", label: "Ayı"),
-        .init(id: "penguin", emoji: "🐧", label: "Penguen"), .init(id: "panda", emoji: "🐼", label: "Panda")
-    ]
+
     @AppStorage("shadow_unlocked") private var shadowUnlocked = 1
     @State private var shadow = ShadowGame(items: [
         .init(id: "lion", emoji: "🦁", label: "Aslan"),
@@ -114,6 +109,7 @@ public struct YonaMatchView: View {
                                         .background(selectedShadow == item.id ? Color.yellow.opacity(0.6) : Color.blue.opacity(0.2),
                                                     in: RoundedRectangle(cornerRadius: 16))
                                 }
+                                .onDrag { NSItemProvider(object: item.id as NSString) }
                             }
                         }
                         Text("Gölgesini seç").font(.headline)
@@ -132,7 +128,19 @@ public struct YonaMatchView: View {
                                         .frame(maxWidth: .infinity, minHeight: 88)
                                         .background(Color.purple.opacity(0.2), in: RoundedRectangle(cornerRadius: 16))
                                 }
-                                .disabled(selectedShadow == nil || shadow.matched.contains(item.id))
+                                .disabled(shadow.matched.contains(item.id))
+                                .onDrop(of: [.plainText], isTargeted: nil) { providers in
+                                    guard let provider = providers.first else { return false }
+                                    _ = provider.loadObject(ofClass: NSString.self) { value, _ in
+                                        guard let source = value as? String else { return }
+                                        DispatchQueue.main.async {
+                                            let correct = shadow.match(sourceId: source, targetId: item.id)
+                                            shadowFeedback = correct ? "Harika, doğru eşleşme!" : "Tekrar deneyelim!"
+                                            if shadow.isComplete { shadowUnlocked = max(shadowUnlocked, min(20, level + 1)); page = .result }
+                                        }
+                                    }
+                                    return true
+                                }
                             }
                         }
                         Text("Eşleşen: \(shadow.matched.count)/\(shadow.items.count) · Deneme: \(shadow.attempts)")
@@ -190,8 +198,7 @@ public struct YonaMatchView: View {
     }
 
     private func resetShadow() {
-        let count = level <= 5 ? 3 : (level <= 10 ? 4 : (level <= 15 ? 5 : 6))
-        shadow = ShadowGame(items: Array(shadowCatalog.prefix(count)))
+        shadow = ShadowGame(items: (try? ShadowLevelRepository.items(for: level)) ?? [])
         selectedShadow = nil
         shadowFeedback = "Önce hayvanı, sonra gölgesini seç."
     }
