@@ -1,6 +1,7 @@
 package com.yonamatch.app
 
 import android.os.Bundle
+import com.yonamatch.app.data.MatchLevelRepository
 import com.yonamatch.app.data.MatchGame
 import com.yonamatch.app.data.MatchItem
 import com.yonamatch.app.data.ShadowLevelRepository
@@ -81,11 +82,8 @@ private fun YonaMatchApp() {
     val shadowPrefs = remember(context) { context.getSharedPreferences("yonamatch_shadow", 0) }
     var shadowUnlocked by remember { mutableIntStateOf(shadowPrefs.getInt("unlocked", 1)) }
     var matchRound by remember { mutableIntStateOf(0) }
-    val matchItems = remember(selected, level, matchRound) {
-        val shapes = listOf(MatchItem("circle","●","Daire"),MatchItem("square","■","Kare"),MatchItem("triangle","▲","Üçgen"),MatchItem("star","★","Yıldız"),MatchItem("diamond","◆","Elmas"))
-        val colors = listOf(MatchItem("red","🔴","Kırmızı"),MatchItem("blue","🔵","Mavi"),MatchItem("green","🟢","Yeşil"),MatchItem("yellow","🟡","Sarı"),MatchItem("purple","🟣","Mor"))
-        (if (selected == 2) shapes else colors).take(if (level <= 5) 3 else if (level <= 12) 4 else 5)
-    }
+    val matchLevels = remember(selected, context) { MatchLevelRepository(context).levels(if (selected == 2) "shape" else "color") }
+    val matchItems = remember(selected, level, matchRound) { matchLevels[level - 1].items }
     val matchGame = remember(selected, level, matchRound) { MatchGame(matchItems) }
     var matchSelection by remember(selected, level, matchRound) { mutableStateOf<String?>(null) }
     var matchCount by remember(selected, level, matchRound) { mutableIntStateOf(0) }
