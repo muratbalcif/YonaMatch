@@ -1,0 +1,17 @@
+name: Content Validation
+on:
+  push:
+    paths:
+      - 'shared-content/**'
+      - 'android/app/src/main/assets/**'
+      - 'ios/Sources/YonaMatchCore/Resources/**'
+      - 'scripts/validate_content.py'
+      - '.github/workflows/content.yml'
+  pull_request:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate level content and platform copies
+        run: python3 scripts/validate_content.py
