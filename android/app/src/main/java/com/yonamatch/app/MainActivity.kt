@@ -285,6 +285,31 @@ private fun YonaMatchApp() {
                             }
                         }
                     }
+                    if (selected == 5) {
+                        AnimatedVisibility(visible = matchCount > 0) {
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text("✨", fontSize = 28.sp)
+                                LazyVerticalGrid(
+                                    columns = GridCells.Fixed(2),
+                                    modifier = Modifier.height(220.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    items(matchGame.items.filter { it.id in matchGame.matched }, key = { it.id }) { solved ->
+                                        Surface(color = mint.copy(alpha = 0.25f), shape = RoundedCornerShape(18.dp)) {
+                                            Row(Modifier.height(76.dp).padding(horizontal = 8.dp),
+                                                horizontalArrangement = Arrangement.Center,
+                                                verticalAlignment = Alignment.CenterVertically) {
+                                                Text(solved.symbol, fontSize = 30.sp)
+                                                Text("💚", fontSize = 17.sp)
+                                                Text(associationTargets.getValue(solved.id).symbol, fontSize = 30.sp)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     if (selected == 4) {
                         AnimatedVisibility(visible = matchCount > 0) {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
