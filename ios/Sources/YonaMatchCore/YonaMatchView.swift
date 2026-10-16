@@ -2,6 +2,8 @@ import SwiftUI
 
 @available(iOS 16.0, *)
 public struct YonaMatchView: View {
+    private let levels = (try? LevelRepository.memoryLevels()) ?? []
+    private let progress = ProgressRepository()
     @State private var game = MemoryGame()
     @State private var page: Page = .home
     @State private var selected = 0
@@ -97,7 +99,9 @@ public struct YonaMatchView: View {
                                     }
                                 }
                                 if game.isComplete {
-                                    unlocked = max(unlocked, min(level + 1, 20))
+                                    let ideal = levels.first(where: { $0.order == level })?.idealAttempts ?? game.cards.count / 2
+                                    progress.finish(level: level, stars: game.attempts <= ideal ? 3 : 2)
+                                    unlocked = progress.unlocked
                                     page = .result
                                 }
                             } label: {
@@ -114,7 +118,7 @@ public struct YonaMatchView: View {
                 case .result:
                     Text("🎉").font(.system(size: 76)).frame(maxWidth: .infinity)
                     Text("Harika! Bölümü tamamladın!").font(.title.bold()).frame(maxWidth: .infinity)
-                    Text("⭐ ⭐ ⭐").font(.largeTitle).frame(maxWidth: .infinity)
+                    Text(String(repeating: "⭐", count: game.attempts <= (levels.first(where: { $0.order == level })?.idealAttempts ?? 3) ? 3 : 2)).font(.largeTitle).frame(maxWidth: .infinity)
                     Text("Deneme sayısı: \(game.attempts)").frame(maxWidth: .infinity)
                     Button("Sonraki Bölüm") {
                         level = min(level + 1, 20)
@@ -132,7 +136,7 @@ public struct YonaMatchView: View {
     }
 
     private func makeGame() -> MemoryGame {
-        let count = level <= 5 ? 3 : (level <= 10 ? 4 : (level <= 15 ? 6 : 8))
+        let count = levels.first(where: { $0.order == level })?.pairs ?? 3
         return MemoryGame(pairs: Array(["🦁", "🐘", "🐰", "🐼", "🐧", "🐱", "🐶", "🐻"].prefix(count)))
     }
 }
