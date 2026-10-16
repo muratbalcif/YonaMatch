@@ -6,6 +6,11 @@ public struct YonaMatchView: View {
     private let progress = ProgressRepository()
     @State private var game = MemoryGame()
 
+    @AppStorage("shape_unlocked") private var shapeUnlocked = 1
+    @AppStorage("color_unlocked") private var colorUnlocked = 1
+    @State private var matchGame = MatchGame(items: [.init(id: "circle", symbol: "●", label: "Daire")])
+    @State private var matchSelection: String? = nil
+    @State private var matchFeedback = "Kartı ve hedefini eşleştir."
     @AppStorage("shadow_unlocked") private var shadowUnlocked = 1
     @State private var shadow = ShadowGame(items: [
         .init(id: "lion", emoji: "🦁", label: "Aslan"),
@@ -73,7 +78,7 @@ public struct YonaMatchView: View {
                     }
                 case .levels:
                     Text("\(modes[selected].1) \(modes[selected].0)").font(.title2.bold())
-                    if selected > 1 {
+                    if selected > 3 {
                         Text("Bu oyun yakında hazır olacak. Şimdilik Hafıza Kartları'nı oynayabilirsin.")
                         Button("Hafıza Kartları") { selected = 0 }
                     } else {
@@ -82,20 +87,58 @@ public struct YonaMatchView: View {
                             ForEach(1...20, id: \.self) { n in
                                 Button {
                                     level = n
-                                    if selected == 1 { resetShadow() } else { game = makeGame() }
+                                    if selected == 1 { resetShadow() } else if selected == 2 || selected == 3 { resetMatching() } else { game = makeGame() }
                                     page = .game
                                 } label: {
-                                    Text(n <= (selected == 1 ? shadowUnlocked : unlocked) ? "\(n) ⭐" : "🔒")
+                                    Text(n <= (selected == 1 ? shadowUnlocked : (selected == 2 ? shapeUnlocked : (selected == 3 ? colorUnlocked : unlocked))) ? "\(n) ⭐" : "🔒")
                                         .frame(maxWidth: .infinity, minHeight: 65)
-                                        .background((n <= (selected == 1 ? shadowUnlocked : unlocked)) ? Color.yellow.opacity(0.3) : Color.gray.opacity(0.14),
+                                        .background((n <= (selected == 1 ? shadowUnlocked : (selected == 2 ? shapeUnlocked : (selected == 3 ? colorUnlocked : unlocked)))) ? Color.yellow.opacity(0.3) : Color.gray.opacity(0.14),
                                                     in: RoundedRectangle(cornerRadius: 16))
                                 }
-                                .disabled(n > (selected == 1 ? shadowUnlocked : unlocked))
+                                .disabled(n > (selected == 1 ? shadowUnlocked : (selected == 2 ? shapeUnlocked : (selected == 3 ? colorUnlocked : unlocked))))
                             }
                         }
                     }
                 case .game:
-                    if selected == 1 {
+                    if selected == 2 || selected == 3 {
+                        Text(selected == 2 ? "🔺 Şekil Eşleştirme" : "🎨 Renk Eşleştirme").font(.title2.bold())
+                        Text(matchFeedback)
+                        HStack(spacing: 8) {
+                            ForEach(matchGame.items.filter { !matchGame.matched.contains($0.id) }) { item in
+                                Button { matchSelection = item.id } label: {
+                                    Text(item.symbol).font(.system(size: 30))
+                                        .frame(maxWidth: .infinity, minHeight: 84)
+                                        .background(matchSelection == item.id ? Color.yellow.opacity(0.5) : Color.mint.opacity(0.2), in: RoundedRectangle(cornerRadius: 14))
+                                }
+                                .onDrag { NSItemProvider(object: item.id as NSString) }
+                            }
+                        }
+                        Text("Doğru hedefi seç")
+                        HStack(spacing: 8) {
+                            ForEach(matchGame.targets) { item in
+                                Button {
+                                    guard let source = matchSelection else { return }
+                                    submitMatching(source: source, target: item.id)
+                                } label: {
+                                    Text(matchGame.matched.contains(item.id) ? "✓" : item.label)
+                                        .font(.system(size: 13))
+                                        .frame(maxWidth: .infinity, minHeight: 84)
+                                        .background(matchGame.matched.contains(item.id) ? Color.mint.opacity(0.5) : Color.purple.opacity(0.2), in: RoundedRectangle(cornerRadius: 14))
+                                }
+                                .disabled(matchGame.matched.contains(item.id))
+                                .onDrop(of: [.plainText], isTargeted: nil) { providers in
+                                    guard let provider = providers.first else { return false }
+                                    _ = provider.loadObject(ofClass: NSString.self) { value, _ in
+                                        guard let source = value as? String else { return }
+                                        DispatchQueue.main.async { submitMatching(source: source, target: item.id) }
+                                    }
+                                    return true
+                                }
+                            }
+                        }
+                        Text("Eşleşen: \(matchGame.matched.count)/\(matchGame.items.count) · Deneme: \(matchGame.attempts)")
+                        Button("Yeniden Başlat") { resetMatching() }
+                    } else if selected == 1 {
                         Text("🐘 Gölgesini Bul").font(.title2.bold())
                         Text(shadowFeedback)
                         Text("Hayvanlar").font(.headline)
@@ -181,10 +224,10 @@ public struct YonaMatchView: View {
                 case .result:
                     Text("🎉").font(.system(size: 76)).frame(maxWidth: .infinity)
                     Text("Harika! Bölümü tamamladın!").font(.title.bold()).frame(maxWidth: .infinity)
-                    Text(String(repeating: "⭐", count: selected == 1 ? 3 : (game.attempts <= (levels.first(where: { $0.order == level })?.idealAttempts ?? 3) ? 3 : 2))).font(.largeTitle).frame(maxWidth: .infinity)
-                    Text("Deneme sayısı: \(selected == 1 ? shadow.attempts : game.attempts)").frame(maxWidth: .infinity)
+                    Text(String(repeating: "⭐", count: (selected >= 1 && selected <= 3) ? 3 : (game.attempts <= (levels.first(where: { $0.order == level })?.idealAttempts ?? 3) ? 3 : 2))).font(.largeTitle).frame(maxWidth: .infinity)
+                    Text("Deneme sayısı: \(selected == 1 ? shadow.attempts : ((selected == 2 || selected == 3) ? matchGame.attempts : game.attempts))").frame(maxWidth: .infinity)
                     Button("Sonraki Bölüm") {
-                        if selected == 1 { level = min(level + 1, 20); resetShadow() } else { level = min(level + 1, 20); game = makeGame() }
+                        if selected == 1 { level = min(level + 1, 20); resetShadow() } else if selected == 2 || selected == 3 { level = min(level + 1, 20); resetMatching() } else { level = min(level + 1, 20); game = makeGame() }
                         page = .game
                     }.buttonStyle(.borderedProminent).frame(maxWidth: .infinity)
                     Button("Seviye Haritası") { page = .levels }.frame(maxWidth: .infinity)
@@ -195,6 +238,25 @@ public struct YonaMatchView: View {
             .foregroundStyle(navy)
         }
         .background(cream.ignoresSafeArea())
+    }
+
+    private func resetMatching() {
+        let type = selected == 2 ? "shape" : "color"
+        let items = (try? MatchLevelRepository.items(type, level: level)) ?? []
+        if !items.isEmpty { matchGame = MatchGame(items: items) }
+        matchSelection = nil
+        matchFeedback = "Kartı ve hedefini eşleştir."
+    }
+
+    private func submitMatching(source: String, target: String) {
+        let correct = matchGame.match(source: source, target: target)
+        matchFeedback = correct ? "Harika!" : "Tekrar deneyelim!"
+        matchSelection = nil
+        if matchGame.complete {
+            if selected == 2 { shapeUnlocked = max(shapeUnlocked, min(20, level + 1)) }
+            else { colorUnlocked = max(colorUnlocked, min(20, level + 1)) }
+            page = .result
+        }
     }
 
     private func resetShadow() {

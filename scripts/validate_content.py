@@ -34,3 +34,18 @@ for platform_path in [
 ]:
     assert json.loads((root / platform_path).read_text()) == shadow, platform_path
 print("Shadow validation passed: 20 levels, both platforms")
+
+for game_type in ("shape", "color"):
+    content = json.loads((root / f"shared-content/levels/{game_type}.json").read_text())
+    assert content["schemaVersion"] == 1 and content["gameType"] == game_type
+    assert len(content["levels"]) == 20
+    assert [entry["order"] for entry in content["levels"]] == list(range(1, 21))
+    ids = {item["id"] for item in content["catalog"]}
+    assert len(ids) == len(content["catalog"])
+    for entry in content["levels"]:
+        assert len(entry["items"]) == len(set(entry["items"]))
+        assert set(entry["items"]).issubset(ids)
+        assert entry["idealAttempts"] >= len(entry["items"])
+    for platform in ("android/app/src/main/assets/levels", "ios/Sources/YonaMatchCore/Resources/levels"):
+        assert json.loads((root / platform / f"{game_type}.json").read_text()) == content
+print("Shape and color validation passed: 40 levels, both platforms")
