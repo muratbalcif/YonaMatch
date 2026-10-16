@@ -233,6 +233,8 @@ private fun YonaMatchApp() {
                         horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         items(20) { index ->
                             val n = index + 1
+                            val gameKey = listOf("memory", "shadow", "shape", "color", "halves", "association")[selected]
+                            val bestStars = gameProgress.bestStars(gameKey, n)
                             val isUnlocked = n <= if (selected == 1) shadowUnlocked else unlocked
 
                             Surface(
