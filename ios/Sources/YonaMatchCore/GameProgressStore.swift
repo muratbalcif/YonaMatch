@@ -2,7 +2,17 @@ import Foundation
 
 public struct GameProgressStore {
     private let storage: UserDefaults
-    public init(storage: UserDefaults = .standard) { self.storage = storage }
+    public init(storage: UserDefaults = .standard) {
+        self.storage = storage
+        if !storage.bool(forKey: "ym_migration_v1_done") {
+            for game in ["memory", "shadow", "shape", "color", "halves", "association"] {
+                let old = storage.integer(forKey: "\(game)_unlocked")
+                let key = "ym_progress_\(game)"
+                storage.set(max(1, min(20, max(old, storage.integer(forKey: key)))), forKey: key)
+            }
+            storage.set(true, forKey: "ym_migration_v1_done")
+        }
+    }
 
     public func unlocked(_ game: String) -> Int {
         min(20, max(1, storage.integer(forKey: "ym_progress_\(game)")))
