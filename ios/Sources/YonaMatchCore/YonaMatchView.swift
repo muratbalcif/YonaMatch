@@ -5,6 +5,13 @@ public struct YonaMatchView: View {
     private let levels = (try? LevelRepository.memoryLevels()) ?? []
     private let progress = ProgressRepository()
     @State private var game = MemoryGame()
+    private let shadowCatalog: [ShadowItem] = [
+        .init(id: "lion", emoji: "🦁", label: "Aslan"), .init(id: "elephant", emoji: "🐘", label: "Fil"),
+        .init(id: "rabbit", emoji: "🐰", label: "Tavşan"), .init(id: "cat", emoji: "🐱", label: "Kedi"),
+        .init(id: "dog", emoji: "🐶", label: "Köpek"), .init(id: "bear", emoji: "🐻", label: "Ayı"),
+        .init(id: "penguin", emoji: "🐧", label: "Penguen"), .init(id: "panda", emoji: "🐼", label: "Panda")
+    ]
+    @AppStorage("shadow_unlocked") private var shadowUnlocked = 1
     @State private var shadow = ShadowGame(items: [
         .init(id: "lion", emoji: "🦁", label: "Aslan"),
         .init(id: "elephant", emoji: "🐘", label: "Fil"),
@@ -77,18 +84,18 @@ public struct YonaMatchView: View {
                     } else {
                         Text("Bir bölüm seç")
                         LazyVGrid(columns: columns, spacing: 12) {
-                            ForEach(1...(selected == 1 ? 1 : 20), id: \.self) { n in
+                            ForEach(1...20, id: \.self) { n in
                                 Button {
                                     level = n
                                     if selected == 1 { resetShadow() } else { game = makeGame() }
                                     page = .game
                                 } label: {
-                                    Text(selected == 1 || n <= unlocked ? "\(n) ⭐" : "🔒")
+                                    Text(n <= (selected == 1 ? shadowUnlocked : unlocked) ? "\(n) ⭐" : "🔒")
                                         .frame(maxWidth: .infinity, minHeight: 65)
-                                        .background((selected == 1 || n <= unlocked) ? Color.yellow.opacity(0.3) : Color.gray.opacity(0.14),
+                                        .background((n <= (selected == 1 ? shadowUnlocked : unlocked)) ? Color.yellow.opacity(0.3) : Color.gray.opacity(0.14),
                                                     in: RoundedRectangle(cornerRadius: 16))
                                 }
-                                .disabled(selected == 0 && n > unlocked)
+                                .disabled(n > (selected == 1 ? shadowUnlocked : unlocked))
                             }
                         }
                     }
@@ -117,7 +124,7 @@ public struct YonaMatchView: View {
                                     let correct = shadow.match(sourceId: source, targetId: item.id)
                                     shadowFeedback = correct ? "Harika, doğru eşleşme!" : "Tekrar deneyelim!"
                                     selectedShadow = nil
-                                    if shadow.isComplete { page = .result }
+                                    if shadow.isComplete { shadowUnlocked = max(shadowUnlocked, min(20, level + 1)); page = .result }
                                 } label: {
                                     Text(shadow.matched.contains(item.id) ? "✓" : item.emoji)
                                         .font(.system(size: 42))
@@ -128,7 +135,7 @@ public struct YonaMatchView: View {
                                 .disabled(selectedShadow == nil || shadow.matched.contains(item.id))
                             }
                         }
-                        Text("Eşleşen: \(shadow.matched.count)/3 · Deneme: \(shadow.attempts)")
+                        Text("Eşleşen: \(shadow.matched.count)/\(shadow.items.count) · Deneme: \(shadow.attempts)")
                         Button("Yeniden Başlat") { resetShadow() }
                     } else {
                     Text("Hafıza Kartları · Bölüm \(level)").font(.title2.bold())
@@ -151,6 +158,8 @@ public struct YonaMatchView: View {
                                 }
                             } label: {
                                 Text(game.revealed.contains(index) || game.matched.contains(index) ? game.cards[index] : "❔")
+                                    .contentTransition(.opacity)
+                                    .animation(.easeInOut(duration: 0.28), value: game.revealed.contains(index) || game.matched.contains(index))
                                     .font(.system(size: 30))
                                     .frame(maxWidth: .infinity, minHeight: 72)
                                     .background(game.matched.contains(index) ? Color.mint.opacity(0.4) : Color.blue.opacity(0.25),
@@ -166,8 +175,8 @@ public struct YonaMatchView: View {
                     Text("Harika! Bölümü tamamladın!").font(.title.bold()).frame(maxWidth: .infinity)
                     Text(String(repeating: "⭐", count: selected == 1 ? 3 : (game.attempts <= (levels.first(where: { $0.order == level })?.idealAttempts ?? 3) ? 3 : 2))).font(.largeTitle).frame(maxWidth: .infinity)
                     Text("Deneme sayısı: \(selected == 1 ? shadow.attempts : game.attempts)").frame(maxWidth: .infinity)
-                    Button(selected == 1 ? "Tekrar Oyna" : "Sonraki Bölüm") {
-                        if selected == 1 { resetShadow() } else { level = min(level + 1, 20); game = makeGame() }
+                    Button("Sonraki Bölüm") {
+                        if selected == 1 { level = min(level + 1, 20); resetShadow() } else { level = min(level + 1, 20); game = makeGame() }
                         page = .game
                     }.buttonStyle(.borderedProminent).frame(maxWidth: .infinity)
                     Button("Seviye Haritası") { page = .levels }.frame(maxWidth: .infinity)
@@ -181,11 +190,8 @@ public struct YonaMatchView: View {
     }
 
     private func resetShadow() {
-        shadow = ShadowGame(items: [
-            .init(id: "lion", emoji: "🦁", label: "Aslan"),
-            .init(id: "elephant", emoji: "🐘", label: "Fil"),
-            .init(id: "rabbit", emoji: "🐰", label: "Tavşan")
-        ])
+        let count = level <= 5 ? 3 : (level <= 10 ? 4 : (level <= 15 ? 5 : 6))
+        shadow = ShadowGame(items: Array(shadowCatalog.prefix(count)))
         selectedShadow = nil
         shadowFeedback = "Önce hayvanı, sonra gölgesini seç."
     }
