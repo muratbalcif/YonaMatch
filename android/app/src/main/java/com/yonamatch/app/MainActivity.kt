@@ -134,12 +134,37 @@ private fun YonaMatchApp() {
                         horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         items(20) { index ->
                             val n = index + 1
+                            val isUnlocked = n <= if (selected == 1) shadowUnlocked else unlocked
+
                             Surface(
-                                modifier = Modifier.aspectRatio(1f).clickable(enabled = n <= (if (selected == 1) shadowUnlocked else unlocked) { level = n; if (selected == 1) shadowRound++ else round++; page = "game" },
-                                color = if (n <= (if (selected == 1) shadowUnlocked else unlocked)) yellow.copy(alpha = 0.35f) else Color.LightGray.copy(alpha = 0.25f),
+                                modifier = Modifier
+                                    .aspectRatio(1f)
+                                    .clickable(enabled = isUnlocked) {
+                                        level = n
+
+                                        if (selected == 1) {
+                                            shadowRound++
+                                        } else {
+                                            round++
+                                        }
+
+                                        page = "game"
+                                    },
+                                color = if (isUnlocked) {
+                                    yellow.copy(alpha = 0.35f)
+                                } else {
+                                    Color.LightGray.copy(alpha = 0.25f)
+                                },
                                 shape = RoundedCornerShape(16.dp)
                             ) {
-                                Box(contentAlignment = Alignment.Center) { Text(if (n <= (if (selected == 1) shadowUnlocked else unlocked)) "$n ⭐" else "🔒", fontSize = 18.sp) }
+                                Box(
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = if (isUnlocked) "$n ⭐" else "🔒",
+                                        fontSize = 18.sp
+                                    )
+                                }
                             }
                         }
                     }
