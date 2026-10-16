@@ -168,6 +168,9 @@ private fun YonaMatchApp() {
     var halvesUnlocked by remember { mutableIntStateOf(matchPrefs.getInt("halves_unlocked", 1)) }
     var associationUnlocked by remember { mutableIntStateOf(matchPrefs.getInt("association_unlocked", 1)) }
     var matchFeedback by remember(selected, level, matchRound) { mutableStateOf("Kartı ve hedefini eşleştir.") }
+    var wrongTarget by remember(selected, level, matchRound) { mutableStateOf<String?>(null) }
+    var wrongTick by remember(selected, level, matchRound) { mutableIntStateOf(0) }
+    LaunchedEffect(wrongTick) { if (wrongTarget != null) { kotlinx.coroutines.delay(650); wrongTarget = null } }
     var shadowRound by remember { mutableIntStateOf(0) }
     val shadowLevels = remember(context) { ShadowLevelRepository(context).levels() }
     val shadow = remember(shadowRound, level) { ShadowGame(shadowLevels[level - 1].items) }
@@ -260,6 +263,8 @@ private fun YonaMatchApp() {
                                 val correct = matchGame.match(source, item.id)
                                 matchCount = matchGame.matched.size
                                 matchFeedback = if (correct) "Harika!" else "Tekrar deneyelim!"
+                                wrongTarget = if (correct) null else item.id
+                                wrongTick++
                                 matchSelection = null
                                 if (matchGame.complete) {
                                     val next = (level + 1).coerceAtMost(20)
@@ -279,9 +284,9 @@ private fun YonaMatchApp() {
                                     }
                                 })
                                 .clickable(enabled = matchSelection != null && item.id !in matchGame.matched) { completeMatch(matchSelection!!) },
-                                color = if (item.id in matchGame.matched) mint.copy(alpha = 0.5f) else lavender.copy(alpha = 0.2f),
+                                color = if (item.id in matchGame.matched) mint.copy(alpha = 0.5f) else if (wrongTarget == item.id) Color(0xFFFFD6DC) else lavender.copy(alpha = 0.2f),
                                 shape = RoundedCornerShape(14.dp)) {
-                                Box(contentAlignment = Alignment.Center) { if (item.id in matchGame.matched) Text("✓", fontSize = 32.sp) else if (selected == 4) HalfVisual(item, left = false) else MatchVisual(if (selected == 5) associationTargets.getValue(item.id) else item, selected == 3, faded = selected == 2) }
+                                Box(contentAlignment = Alignment.Center) { if (wrongTarget == item.id) Text("↻", fontSize = 32.sp) else if (item.id in matchGame.matched) Text("✓", fontSize = 32.sp) else if (selected == 4) HalfVisual(item, left = false) else MatchVisual(if (selected == 5) associationTargets.getValue(item.id) else item, selected == 3, faded = selected == 2) }
                             }
                         }
                     }
