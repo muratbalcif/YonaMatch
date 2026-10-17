@@ -32,7 +32,7 @@ struct PairMatchingPlayScreen: View {
 
     @ViewBuilder private func artwork(_ item: MatchItem, isTarget: Bool) -> some View {
         if mode == 3 {
-            Circle().fill(color(item.id)).frame(width: 54, height: 54)
+            Circle().fill(color(item.id)).frame(width: 72, height: 72)
         } else if mode == 4 {
             YonaMatchView.halfArtwork(item)
                 .frame(width: 56, height: 62)
@@ -41,7 +41,7 @@ struct PairMatchingPlayScreen: View {
                 .clipped()
         } else {
             Text(item.symbol)
-                .font(.system(size: 58, weight: .bold))
+                .font(.system(size: 72, weight: .bold))
                 .foregroundStyle(isTarget ? Color.gray : Color.primary)
         }
     }
@@ -72,11 +72,11 @@ struct PairMatchingPlayScreen: View {
             }
             GeometryReader { geometry in
                     HStack(alignment: .top, spacing: 12) {
-                let rows = (game.items.count <= 3 ? game.items.count : (game.items.count + 1) / 2)
+                let rows = game.items.count
                 let cardHeight = max(64, (geometry.size.height - CGFloat(rows - 1) * 8) / CGFloat(rows))
                 ForEach([false, true], id: \.self) { isTarget in
                     let entries = isTarget ? game.targets : game.items
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: entries.count <= 3 ? 1 : 2), spacing: 8) {
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 8)], spacing: 8) {
                         ForEach(entries) { item in
                             Button {
                                 if isTarget {
@@ -100,7 +100,7 @@ struct PairMatchingPlayScreen: View {
                                     (selectedRight == item.id && isTarget ? Color.yellow.opacity(0.5) :
                                     (selectedSource == item.id && !isTarget ? Color.yellow.opacity(0.5) :
                                     (isTarget ? Color.purple.opacity(0.2) : Color.mint.opacity(0.2))))),
-                                    in: RoundedRectangle(cornerRadius: 16))
+                                    in: RoundedRectangle(cornerRadius: 22))
                             }
                             .disabled(game.matched.contains(item.id))
                             .onDrag { NSItemProvider(object: item.id as NSString) }
