@@ -9,6 +9,7 @@ public struct YonaMatchView: View {
     @AppStorage("yonamatch_profile_name") private var profileName = "Yona"
     @AppStorage("yonamatch_profile_avatar") private var profileAvatar = "🦁"
     @AppStorage("yonamatch_profile_age") private var profileAge = "3-4"
+    @State private var openingStage = 0
     @State private var resultStars = 3
     @AppStorage("shape_unlocked") private var shapeUnlocked = 1
     @AppStorage("color_unlocked") private var colorUnlocked = 1
@@ -120,7 +121,11 @@ public struct YonaMatchView: View {
 
     public var body: some View {
         Group {
-        if !profileCompleted {
+        if !profileCompleted && openingStage < 2 {
+            OpeningScreen(splash: openingStage == 0,
+                          onSplashFinished: { openingStage = 1 },
+                          onStart: { openingStage = 2 })
+        } else if !profileCompleted {
             ChildProfileScreen { name, avatar, age in
                 profileName = name
                 profileAvatar = avatar
