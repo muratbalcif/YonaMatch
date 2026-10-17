@@ -8,6 +8,7 @@ struct PairMatchingPlayScreen: View {
     let onComplete: (Int, Bool) -> Void
     @State private var game: MatchGame
     @State private var selectedSource: String?
+    @State private var selectedRight: String?
     @State private var hintUsed = false
     @State private var wrongTarget: String?
 
@@ -25,6 +26,7 @@ struct PairMatchingPlayScreen: View {
         let success = game.match(source: source, target: target)
         wrongTarget = success ? nil : target
         selectedSource = nil
+        selectedRight = nil
         if game.complete { onComplete(game.attempts, hintUsed) }
     }
 
@@ -62,6 +64,7 @@ struct PairMatchingPlayScreen: View {
                 Spacer()
                 Button {
                     selectedSource = game.items.first(where: { !game.matched.contains($0.id) })?.id
+                    selectedRight = nil
                     if selectedSource != nil { hintUsed = true }
                 } label: { Text("💡").font(.system(size: 34)) }
             }
@@ -73,8 +76,10 @@ struct PairMatchingPlayScreen: View {
                             Button {
                                 if isTarget {
                                     if let source = selectedSource { submit(source, item.id) }
+                                    else { selectedRight = item.id }
                                 } else {
-                                    selectedSource = item.id
+                                    if let right = selectedRight { submit(item.id, right) }
+                                    else { selectedSource = item.id }
                                 }
                             } label: {
                                 Group {
@@ -87,8 +92,9 @@ struct PairMatchingPlayScreen: View {
                                 .frame(maxWidth: .infinity, minHeight: 110)
                                 .background(game.matched.contains(item.id) ? Color.mint.opacity(0.5) :
                                     (wrongTarget == item.id && isTarget ? Color.red.opacity(0.2) :
+                                    (selectedRight == item.id && isTarget ? Color.yellow.opacity(0.5) :
                                     (selectedSource == item.id && !isTarget ? Color.yellow.opacity(0.5) :
-                                    (isTarget ? Color.purple.opacity(0.2) : Color.mint.opacity(0.2)))),
+                                    (isTarget ? Color.purple.opacity(0.2) : Color.mint.opacity(0.2))))),
                                     in: RoundedRectangle(cornerRadius: 16))
                             }
                             .disabled(game.matched.contains(item.id))
