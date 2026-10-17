@@ -13,6 +13,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.times
 import com.yonamatch.app.data.AssociationLevelRepository
 import com.yonamatch.app.data.MatchGame
@@ -125,6 +131,9 @@ private fun PairMatchingScreen(
     var revision by remember(type, level, round) { mutableIntStateOf(0) }
     var wrongTarget by remember(type, level, round) { mutableStateOf<String?>(null) }
     val completed = game.matched.toSet()
+    val cardBounds = remember(type, level, round) { mutableMapOf<String, Rect>() }
+    var dragging by remember(type, level, round) { mutableStateOf<Pair<Boolean, String>?>(null) }
+    var dragPosition by remember(type, level, round) { mutableStateOf(Offset.Zero) }
     fun submit(source: String, target: String) {
         if (game.complete) return
         val correct = game.match(source, target)
@@ -160,7 +169,35 @@ private fun PairMatchingScreen(
                     items(entries, key = { it.id }) { item ->
                         val solved = item.id in completed
                         Surface(
-                            modifier = Modifier.fillMaxWidth().height(cardHeight).clickable(enabled = !solved) {
+                            modifier = Modifier.fillMaxWidth().height(cardHeight)
+                                .onGloballyPositioned { cardBounds[(if (isTarget) "R:" else "L:") + item.id] = it.boundsInRoot() }
+                                .pointerInput(item.id, isTarget, solved) {
+                                    if (!solved) detectDragGestures(
+                                        onDragStart = { start ->
+                                            dragging = isTarget to item.id
+                                            dragPosition = (cardBounds[(if (isTarget) "R:" else "L:") + item.id]?.topLeft ?: Offset.Zero) + start
+                                        },
+                                        onDragEnd = {
+                                            val source = dragging
+                                            if (source != null) {
+                                                val destination = cardBounds.entries.firstOrNull { (key, bounds) ->
+                                                    bounds.contains(dragPosition) && key.startsWith(if (source.first) "L:" else "R:")
+                                                }
+                                                if (destination != null) {
+                                                    if (source.first) submit(destination.key.removePrefix("L:"), source.second)
+                                                    else submit(source.second, destination.key.removePrefix("R:"))
+                                                }
+                                            }
+                                            dragging = null
+                                        },
+                                        onDragCancel = { dragging = null },
+                                        onDrag = { change, delta ->
+                                            change.consume()
+                                            dragPosition += delta
+                                        }
+                                    )
+                                }
+                                .clickable(enabled = !solved) {
                                 if (isTarget) {
                                     if (selection != null) submit(selection!!, item.id) else selectedRight = item.id
                                 } else {
