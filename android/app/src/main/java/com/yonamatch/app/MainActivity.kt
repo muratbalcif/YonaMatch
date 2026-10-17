@@ -159,7 +159,7 @@ private fun YonaMatchApp() {
     var shadowRound by remember { mutableIntStateOf(0) }
     val shadowLevels = remember(context) { ShadowLevelRepository(context).levels() }
     Column(
-        Modifier.fillMaxSize().background(cream).verticalScroll(rememberScrollState()).padding(20.dp),
+        Modifier.fillMaxSize().background(cream).then(if (page == "game") Modifier else Modifier.verticalScroll(rememberScrollState())).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
