@@ -1,6 +1,7 @@
 import SwiftUI
 
 /// Separate state and visual lifecycle for shape, color and halves modes.
+@available(iOS 16.0, *)
 struct PairMatchingPlayScreen: View {
     let mode: Int
     let level: Int

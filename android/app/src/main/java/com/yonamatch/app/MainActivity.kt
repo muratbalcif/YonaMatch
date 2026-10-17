@@ -191,16 +191,6 @@ private fun YonaMatchApp() {
     var selected by remember { mutableIntStateOf(0) }
     var level by remember { mutableIntStateOf(1) }
     var round by remember { mutableIntStateOf(0) }
-    val cards = remember(round, level) {
-        val count = levels[level - 1].pairs
-        (listOf("🦁", "🐘", "🐰", "🐼", "🐧", "🐱", "🐶", "🐻").take(count).let { it + it }).shuffled()
-    }
-    var opened by remember(round, level) { mutableStateOf<List<Int>>(emptyList()) }
-    var matched by remember(round, level) { mutableStateOf<Set<Int>>(emptySet()) }
-    var attempts by remember(round, level) { mutableIntStateOf(0) }
-    var mismatch by remember(round, level) { mutableStateOf(false) }
-    var memoryHintUsed by remember(round, level) { mutableStateOf(false) }
-    var memoryHintPair by remember(round, level) { mutableStateOf<Set<Int>>(emptySet()) }
     var unlocked by remember { mutableIntStateOf(progress.unlocked()) }
     val shadowPrefs = remember(context) { context.getSharedPreferences("yonamatch_shadow", 0) }
     var shadowUnlocked by remember { mutableIntStateOf(shadowPrefs.getInt("unlocked", 1)) }
@@ -213,76 +203,13 @@ private fun YonaMatchApp() {
         )
     }
     val associationLevels = remember(context) { AssociationLevelRepository(context).levels() }
-    val associationPairs = remember(selected, level) { associationLevels[level - 1].pairs }
-    val matchItems = remember(
-        selected, level, matchRound
-    ) { if (selected == 5) associationPairs.map { it.source } else matchLevels[level - 1].items }
-    val associationTargets =
-        remember(selected, level) { associationPairs.associate { it.source.id to it.target } }
-    val matchGame = remember(selected, level, matchRound) {
-        MatchGame(
-            matchItems, if (selected == 5) associationTargets else emptyMap()
-        )
-    }
-    var matchSelection by remember(selected, level, matchRound) { mutableStateOf<String?>(null) }
-    var matchCount by remember(selected, level, matchRound) { mutableIntStateOf(0) }
-    var matchHintUsed by remember(selected, level, matchRound) { mutableStateOf(false) }
-    var hintSource by remember(selected, level, matchRound) { mutableStateOf<String?>(null) }
     val matchPrefs = remember(context) { context.getSharedPreferences("yonamatch_matching", 0) }
     var shapeUnlocked by remember { mutableIntStateOf(matchPrefs.getInt("shape_unlocked", 1)) }
     var colorUnlocked by remember { mutableIntStateOf(matchPrefs.getInt("color_unlocked", 1)) }
     var halvesUnlocked by remember { mutableIntStateOf(matchPrefs.getInt("halves_unlocked", 1)) }
-    var associationUnlocked by remember {
-        mutableIntStateOf(
-            matchPrefs.getInt(
-                "association_unlocked", 1
-            )
-        )
-    }
-    var matchFeedback by remember(
-        selected, level, matchRound
-    ) { mutableStateOf("Kartı ve hedefini eşleştir.") }
-    var wrongTarget by remember(selected, level, matchRound) { mutableStateOf<String?>(null) }
-    var wrongTick by remember(selected, level, matchRound) { mutableIntStateOf(0) }
-    LaunchedEffect(wrongTick) {
-        if (wrongTarget != null) {
-            kotlinx.coroutines.delay(650); wrongTarget = null
-        }
-    }
+    var associationUnlocked by remember { mutableIntStateOf(matchPrefs.getInt("association_unlocked", 1)) }
     var shadowRound by remember { mutableIntStateOf(0) }
     val shadowLevels = remember(context) { ShadowLevelRepository(context).levels() }
-    val shadow = remember(shadowRound, level) { ShadowGame(shadowLevels[level - 1].items) }
-    var selectedShadow by remember(shadowRound) { mutableStateOf<String?>(null) }
-    var shadowMatches by remember(shadowRound) { mutableIntStateOf(0) }
-    var shadowFeedback by remember(
-        shadowRound, level
-    ) { mutableStateOf("Önce hayvanı, sonra gölgesini seç.") }
-    var shadowHintUsed by remember(shadowRound, level) { mutableStateOf(false) }
-    var shadowHintId by remember(shadowRound, level) { mutableStateOf<String?>(null) }
-    LaunchedEffect(mismatch) {
-        if (mismatch) {
-            kotlinx.coroutines.delay(900)
-            opened = emptyList()
-            mismatch = false
-        }
-    }
-    LaunchedEffect(matched.size) {
-        if (page == "game" && cards.isNotEmpty() && matched.size == cards.size) {
-            val next = (level + 1).coerceAtMost(20)
-            if (next > unlocked) {
-                unlocked = next
-            }
-            resultStars = gameProgress.finish(
-                "memory",
-                level,
-                attempts,
-                levels[level - 1].idealAttempts,
-                hintsUsed = memoryHintUsed
-            )
-            progress.finish(level, resultStars)
-            page = "result"
-        }
-    }
     Column(
         Modifier
             .fillMaxSize()
@@ -384,14 +311,7 @@ private fun YonaMatchApp() {
                                 ) yellow.copy(alpha = 0.35f) else Color.LightGray.copy(alpha = 0.25f),
                                 shape = RoundedCornerShape(16.dp)
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(
-                                        if (n <= (when (selected) {
-                                                1 -> shadowUnlocked; 2 -> shapeUnlocked; 3 -> colorUnlocked; else -> unlocked
-                                            })
-                                        ) "$n ⭐" else "🔒", fontSize = 18.sp
-                                    )
-                                }
+                                Box(contentAlignment = Alignment.Center) { Text(if (n <= (when (selected) { 1 -> shadowUnlocked; 2 -> shapeUnlocked; 3 -> colorUnlocked; 4 -> halvesUnlocked; 5 -> associationUnlocked; else -> unlocked })) "$n ⭐" else "🔒", fontSize = 18.sp) }
                             }
                         }
                     }
@@ -462,13 +382,8 @@ private fun YonaMatchApp() {
                 } else {
                     MemoryPlayScreen(level, round) { completedAttempts, usedHint ->
                         unlocked = maxOf(unlocked, (level + 1).coerceAtMost(20))
-                        resultStars = gameProgress.finish(
-                            "memory",
-                            level,
-                            completedAttempts,
-                            levels[level - 1].pairs,
-                            hintsUsed = usedHint
-                        )
+                        resultStars = gameProgress.finish("memory", level, completedAttempts, levels[level - 1].idealAttempts, hintsUsed = usedHint)
+                        progress.finish(level, resultStars)
                         page = "result"
                     }
                 }
