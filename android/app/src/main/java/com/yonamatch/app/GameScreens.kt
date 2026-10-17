@@ -149,7 +149,7 @@ private fun PairMatchingScreen(
                 val entries = if (isTarget) game.targets else game.items
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(if (entries.size <= 3) 1 else 2),
-                    modifier = Modifier.weight(1f).height(if (entries.size <= 3) 354.dp else if (entries.size <= 4) 228.dp else 342.dp),
+                    modifier = Modifier.weight(1f).height(cardHeight * (if (entries.size <= 3) entries.size else (entries.size + 1) / 2) + 8.dp * (if (entries.size <= 3) entries.size - 1 else (entries.size + 1) / 2 - 1)),
                     userScrollEnabled = false,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -229,7 +229,7 @@ fun MemoryPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit)
     }
     val columns = if (cards.size <= 6) 3 else 4
     val rows = (cards.size + columns - 1) / columns
-    val cardHeight = if (rows <= 2) 148.dp else if (rows == 3) 116.dp else 88.dp
+    val cardHeight = ((LocalConfiguration.current.screenHeightDp.dp - 210.dp - 8.dp * (rows - 1)) / rows).coerceAtLeast(76.dp)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("🦁", fontSize = 32.sp)
@@ -245,7 +245,7 @@ fun MemoryPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit)
         }
         LazyVerticalGrid(
             columns = GridCells.Fixed(columns),
-            modifier = Modifier.height(cardHeight * rows + 10.dp * (rows - 1)),
+            modifier = Modifier.height(cardHeight * rows + 8.dp * (rows - 1)),
             userScrollEnabled = false,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -291,6 +291,7 @@ fun ShadowPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit)
     var hintUsed by remember(level, round) { mutableStateOf(false) }
     var revision by remember(level, round) { mutableIntStateOf(0) }
     val completed = game.matched.toSet()
+    val shadowCardHeight = ((LocalConfiguration.current.screenHeightDp.dp - 220.dp - 8.dp * (game.items.size - 1)) / game.items.size).coerceAtLeast(78.dp)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("🐘", fontSize = 32.sp)
@@ -306,23 +307,33 @@ fun ShadowPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit)
                 val entries = if (target) game.targets else game.items
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(1),
-                    modifier = Modifier.weight(1f).height(entries.size * 112.dp),
+                    modifier = Modifier.weight(1f).height(entries.size * shadowCardHeight + 8.dp * (entries.size - 1)),
                     userScrollEnabled = false,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(entries, key = { it.id }) { item ->
                         val solved = item.id in completed
                         Surface(
-                            modifier = Modifier.fillMaxWidth().height(104.dp).clickable(enabled = !solved && (!target || selection != null)) {
-                                if (!target) selection = item.id
-                                else selection?.let {
-                                    game.match(sourceId = it, targetId = item.id)
-                                    revision++
-                                    selection = null
-                                    if (game.isComplete) onComplete(game.attempts, hintUsed)
+                            modifier = Modifier.fillMaxWidth().height(shadowCardHeight).clickable(enabled = !solved) {
+                                if (target) {
+                                    if (selection != null) {
+                                        game.match(sourceId = selection!!, targetId = item.id)
+                                        revision++
+                                        selection = null
+                                        selectedRight = null
+                                        if (game.isComplete) onComplete(game.attempts, hintUsed)
+                                    } else selectedRight = item.id
+                                } else {
+                                    if (selectedRight != null) {
+                                        game.match(sourceId = item.id, targetId = selectedRight!!)
+                                        revision++
+                                        selection = null
+                                        selectedRight = null
+                                        if (game.isComplete) onComplete(game.attempts, hintUsed)
+                                    } else selection = item.id
                                 }
                             },
-                            color = if (solved) Color(0xFFBDEDD7) else if (!target && selection == item.id) Color(0xFFFFE4A0)
+                            color = if (solved) Color(0xFFBDEDD7) else if ((target && selectedRight == item.id) || (!target && selection == item.id)) Color(0xFFFFE4A0)
                                 else if (target) Color(0xFFECE6FF) else Color(0xFFE0F7EC),
                             shape = RoundedCornerShape(16.dp)
                         ) {
