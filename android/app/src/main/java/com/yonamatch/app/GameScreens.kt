@@ -123,7 +123,6 @@ private fun PairMatchingScreen(
     var selectedRight by remember(type, level, round) { mutableStateOf<String?>(null) }
     var hintUsed by remember(type, level, round) { mutableStateOf(false) }
     var revision by remember(type, level, round) { mutableIntStateOf(0) }
-    val cardHeight = (LocalConfiguration.current.screenHeightDp.dp - 220.dp - 8.dp * (if (game.items.size <= 3) game.items.size - 1 else (game.items.size + 1) / 2 - 1)) / (if (game.items.size <= 3) game.items.size else (game.items.size + 1) / 2).coerceAtLeast(76)
     var wrongTarget by remember(type, level, round) { mutableStateOf<String?>(null) }
     val completed = game.matched.toSet()
     fun submit(source: String, target: String) {
@@ -145,12 +144,15 @@ private fun PairMatchingScreen(
                 if (selection != null) hintUsed = true
             }) { Text("💡", fontSize = 34.sp) }
         }
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            val rows = if (game.items.size <= 3) game.items.size else (game.items.size + 1) / 2
+            val cardHeight = ((maxHeight - 8.dp * (rows - 1)) / rows).coerceAtLeast(64.dp)
+            Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             listOf(false, true).forEach { isTarget ->
                 val entries = if (isTarget) game.targets else game.items
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(if (entries.size <= 3) 1 else 2),
-                    modifier = Modifier.weight(1f).height(cardHeight * (if (entries.size <= 3) entries.size else (entries.size + 1) / 2) + 8.dp * (if (entries.size <= 3) entries.size - 1 else (entries.size + 1) / 2 - 1)),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                     userScrollEnabled = false,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -184,12 +186,13 @@ private fun PairMatchingScreen(
                                     }
                                     Box(Modifier.size(54.dp).background(shade, androidx.compose.foundation.shape.CircleShape))
                                 } else {
-                                    Text(item.symbol, fontSize = 46.sp)
+                                    Text(item.symbol, fontSize = 58.sp, color = if (isTarget && mode == 2) Color(0xFF9CA3AF) else Color(0xFF1F2937))
                                 }
                             }
                         }
                     }
                 }
+            }
             }
         }
         if (wrongTarget != null) Text("↻", fontSize = 28.sp, color = Color(0xFFCC4455))
