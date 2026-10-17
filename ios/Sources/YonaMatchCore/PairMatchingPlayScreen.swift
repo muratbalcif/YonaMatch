@@ -8,6 +8,7 @@ struct PairMatchingPlayScreen: View {
     let onComplete: (Int, Bool) -> Void
     @State private var game: MatchGame
     @State private var selectedSource: String?
+    @State private var selectedRight: String?
     @State private var hintUsed = false
     @State private var wrongTarget: String?
 
@@ -25,6 +26,7 @@ struct PairMatchingPlayScreen: View {
         let success = game.match(source: source, target: target)
         wrongTarget = success ? nil : target
         selectedSource = nil
+        selectedRight = nil
         if game.complete { onComplete(game.attempts, hintUsed) }
     }
 
@@ -62,10 +64,14 @@ struct PairMatchingPlayScreen: View {
                 Spacer()
                 Button {
                     selectedSource = game.items.first(where: { !game.matched.contains($0.id) })?.id
+                    selectedRight = nil
                     if selectedSource != nil { hintUsed = true }
                 } label: { Text("💡").font(.system(size: 34)) }
             }
-            HStack(alignment: .top, spacing: 12) {
+            GeometryReader { geometry in
+                    HStack(alignment: .top, spacing: 12) {
+                let rows = (game.items.count <= 3 ? game.items.count : (game.items.count + 1) / 2)
+                let cardHeight = max(76, (geometry.size.height - CGFloat(rows - 1) * 8) / CGFloat(rows))
                 ForEach([false, true], id: \.self) { isTarget in
                     let entries = isTarget ? game.targets : game.items
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: entries.count <= 3 ? 1 : 2), spacing: 8) {
@@ -73,8 +79,10 @@ struct PairMatchingPlayScreen: View {
                             Button {
                                 if isTarget {
                                     if let source = selectedSource { submit(source, item.id) }
+                                    else { selectedRight = item.id }
                                 } else {
-                                    selectedSource = item.id
+                                    if let right = selectedRight { submit(item.id, right) }
+                                    else { selectedSource = item.id }
                                 }
                             } label: {
                                 Group {
@@ -84,11 +92,12 @@ struct PairMatchingPlayScreen: View {
                                         artwork(item, isTarget: isTarget)
                                     }
                                 }
-                                .frame(maxWidth: .infinity, minHeight: 110)
+                                .frame(maxWidth: .infinity, minHeight: cardHeight)
                                 .background(game.matched.contains(item.id) ? Color.mint.opacity(0.5) :
                                     (wrongTarget == item.id && isTarget ? Color.red.opacity(0.2) :
+                                    (selectedRight == item.id && isTarget ? Color.yellow.opacity(0.5) :
                                     (selectedSource == item.id && !isTarget ? Color.yellow.opacity(0.5) :
-                                    (isTarget ? Color.purple.opacity(0.2) : Color.mint.opacity(0.2)))),
+                                    (isTarget ? Color.purple.opacity(0.2) : Color.mint.opacity(0.2))))),
                                     in: RoundedRectangle(cornerRadius: 16))
                             }
                             .disabled(game.matched.contains(item.id))
@@ -104,6 +113,7 @@ struct PairMatchingPlayScreen: View {
                         }
                     }
                 }
+            }
             }
             if wrongTarget != nil { Text("↻").font(.system(size: 28)).foregroundStyle(.red) }
             Text("⭐ \(game.matched.count)/\(game.items.count)").font(.system(size: 22))
