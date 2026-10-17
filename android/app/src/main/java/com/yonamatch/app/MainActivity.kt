@@ -256,67 +256,86 @@ private fun YonaMatchApp() {
                 }
             }
             "result" -> {
-                var celebrationVisible by remember(selected, level) { mutableStateOf(false) }
-                LaunchedEffect(selected, level) { celebrationVisible = true }
-                val celebrationScale by animateFloatAsState(
-                    targetValue = if (celebrationVisible) 1f else 0.65f,
-                    animationSpec = tween(durationMillis = 480),
-                    label = "celebration"
-                )
-                val displayedStars = resultStars
-                Spacer(Modifier.height(24.dp))
-                Surface(
-                    color = yellow.copy(alpha = 0.22f),
-                    shape = RoundedCornerShape(32.dp),
-                    modifier = Modifier.fillMaxWidth()
+                val modeEmoji = modes[selected].emoji
+                val completed = resultStars.coerceIn(0, 3)
+                Column(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Column(
-                        Modifier.padding(vertical = 30.dp, horizontal = 16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    Box(
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text("🎊", fontSize = 76.sp, modifier = Modifier.graphicsLayer {
-                            scaleX = celebrationScale
-                            scaleY = celebrationScale
-                        })
-                        Text("⭐".repeat(displayedStars), fontSize = 40.sp)
-                        Text("🌈  🦁  🎈", fontSize = 42.sp)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("⭐  ✨  🌟", fontSize = 37.sp)
+                            Text(if (selected == 0) "🦁" else modeEmoji, fontSize = 126.sp)
+                            Text("🌈  🌿  🎉", fontSize = 37.sp)
+                        }
                     }
-                }
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = {
-                            if (selected == 1) shadowRound++
-                            else if (selected in 2..5) matchRound++
-                            else round++
+                    Text("Harika!", fontSize = 48.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFFF34E45))
+                    Text("Bölümü tamamladın!", fontSize = 21.sp, fontWeight = FontWeight.SemiBold, color = navy)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        repeat(3) { index ->
+                            Text(if (index < completed) "⭐" else "☆", fontSize = 58.sp)
+                        }
+                    }
+                    Surface(
+                        color = Color(0xFFF6EFE7),
+                        shape = RoundedCornerShape(24.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp)
+                    ) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("🎯  Deneme:", fontSize = 18.sp, color = navy)
+                                Text("Tamamlandı", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = navy)
+                            }
+                            HorizontalDivider(color = Color.White)
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("💡  İpucu:", fontSize = 18.sp, color = navy)
+                                Text("⭐ $completed / 3", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = navy)
+                            }
+                            HorizontalDivider(color = Color.White)
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("🏆  Bölüm:", fontSize = 18.sp, color = navy)
+                                Text("$level", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = navy)
+                            }
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Button(onClick = { page = "home" }, modifier = Modifier.weight(1f).height(68.dp),
+                            shape = RoundedCornerShape(22.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC5E6FF))) {
+                            Text("⌂", fontSize = 38.sp, color = Color(0xFF12478E))
+                        }
+                        Button(onClick = {
+                            if (selected == 1) shadowRound++ else if (selected in 2..5) matchRound++ else round++
                             page = "game"
-                        },
-                        modifier = Modifier.weight(1f).height(68.dp)
-                    ) { Text("↻", fontSize = 32.sp) }
-                    Button(
-                        onClick = {
-                            if (level >= 20) {
-                                page = "levels"
-                            } else {
+                        }, modifier = Modifier.weight(1f).height(68.dp),
+                            shape = RoundedCornerShape(22.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF37ACF3))) {
+                            Text("↻", fontSize = 38.sp, color = Color.White)
+                        }
+                        Button(onClick = {
+                            if (level >= 20) page = "levels"
+                            else {
                                 level++
-                                if (selected == 1) shadowRound++
-                                else if (selected in 2..5) matchRound++
-                                else round++
+                                if (selected == 1) shadowRound++ else if (selected in 2..5) matchRound++ else round++
                                 page = "game"
                             }
-                        },
-                        modifier = Modifier.weight(2f).height(68.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = mint)
-                    ) { Text(if (level == 20) "🏠" else "▶", fontSize = 34.sp, color = navy) }
+                        }, modifier = Modifier.weight(1f).height(68.dp),
+                            shape = RoundedCornerShape(22.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3CCB92))) {
+                            Text("➜", fontSize = 38.sp, color = Color.White)
+                        }
+                    }
                 }
-                OutlinedButton(
-                    onClick = { page = "levels" },
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
-                ) { Text("▦", fontSize = 28.sp) }
-
             }
         }
     }
