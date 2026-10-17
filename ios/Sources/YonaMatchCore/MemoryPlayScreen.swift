@@ -46,17 +46,20 @@ struct MemoryPlayScreen: View {
             }
             let columns = game.cards.count <= 6 ? 3 : 4
             let rows = (game.cards.count + columns - 1) / columns
+            GeometryReader { geometry in
+                let cardHeight = max(76, (geometry.size.height - CGFloat(rows - 1) * 8) / CGFloat(rows))
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: columns), spacing: 8) {
                 ForEach(game.cards.indices, id: \.self) { index in
                     Button { choose(index) } label: {
                         Text(game.revealed.contains(index) || game.matched.contains(index) || hintPair.contains(index) ? game.cards[index] : "❔")
                             .font(.system(size: rows <= 2 ? 60 : (rows == 3 ? 48 : 40)))
-                            .frame(maxWidth: .infinity, minHeight: rows <= 2 ? 148 : (rows == 3 ? 116 : 88))
+                            .frame(maxWidth: .infinity, minHeight: cardHeight)
                             .background(game.matched.contains(index) ? Color.mint.opacity(0.5) : Color.blue.opacity(0.25),
                                         in: RoundedRectangle(cornerRadius: 16))
                     }
                     .disabled(game.awaitingReset || game.matched.contains(index) || game.revealed.contains(index))
                 }
+            }
             }
         }
     }
