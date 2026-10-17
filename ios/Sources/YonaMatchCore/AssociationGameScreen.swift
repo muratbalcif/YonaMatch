@@ -42,7 +42,9 @@ struct AssociationPlayScreen: View {
                     if selectedSource != nil { hintUsed = true }
                 } label: { Text("💡").font(.system(size: 34)) }
             }
-            HStack(alignment: .top, spacing: 12) {
+            GeometryReader { geometry in
+                    HStack(alignment: .top, spacing: 12) {
+                let cardHeight = max(76, (geometry.size.height - CGFloat((game.items.count <= 3 ? game.items.count : (game.items.count + 1) / 2) - 1) * 8) / CGFloat(game.items.count <= 3 ? game.items.count : (game.items.count + 1) / 2))
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: game.items.count <= 3 ? 1 : 2), spacing: 8) {
                     ForEach(game.items) { item in
                         Button {
@@ -53,7 +55,7 @@ struct AssociationPlayScreen: View {
                         } label: {
                             Text(game.matched.contains(item.id) ? "✓" : item.symbol)
                                 .font(.system(size: 46))
-                                .frame(maxWidth: .infinity, minHeight: 110)
+                                .frame(maxWidth: .infinity, minHeight: cardHeight)
                                 .background(game.matched.contains(item.id) ? Color.mint.opacity(0.5) : (selectedSource == item.id ? Color.yellow.opacity(0.5) : Color.mint.opacity(0.2)), in: RoundedRectangle(cornerRadius: 16))
                         }
                         .disabled(game.matched.contains(item.id))
@@ -69,7 +71,7 @@ struct AssociationPlayScreen: View {
                         } label: {
                             Text(game.matched.contains(sourceId) ? "✓" : item.symbol)
                                 .font(.system(size: 46))
-                                .frame(maxWidth: .infinity, minHeight: 110)
+                                .frame(maxWidth: .infinity, minHeight: cardHeight)
                                 .background(game.matched.contains(sourceId) ? Color.mint.opacity(0.5) : (wrongTarget == item.id ? Color.red.opacity(0.2) : (selectedRight == item.id ? Color.yellow.opacity(0.5) : Color.purple.opacity(0.2))), in: RoundedRectangle(cornerRadius: 16))
                         }
                         .disabled(game.matched.contains(sourceId))
@@ -83,6 +85,7 @@ struct AssociationPlayScreen: View {
                         }
                     }
                 }
+            }
             }
             if wrongTarget != nil { Text("↻").font(.system(size: 28)).foregroundStyle(.red) }
             Text("⭐ \(game.matched.count)/\(game.items.count)").font(.system(size: 22))
