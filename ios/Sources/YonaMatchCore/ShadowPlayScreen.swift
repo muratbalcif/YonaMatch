@@ -35,7 +35,9 @@ struct ShadowPlayScreen: View {
                     if selectedSource != nil { hintUsed = true }
                 } label: { Text("💡").font(.system(size: 34)) }
             }
-            HStack(alignment: .top, spacing: 10) {
+            GeometryReader { geometry in
+                    HStack(alignment: .top, spacing: 10) {
+                let cardHeight = max(76, (geometry.size.height - CGFloat((isShadow ? game.items.count : (game.items.count <= 3 ? game.items.count : (game.items.count + 1) / 2)) - 1) * 8) / CGFloat(isShadow ? game.items.count : (game.items.count <= 3 ? game.items.count : (game.items.count + 1) / 2)))
                 ForEach([false, true], id: \.self) { target in
                     let entries = target ? game.targets : game.items
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 8)], spacing: 8) {
@@ -54,7 +56,7 @@ struct ShadowPlayScreen: View {
                                     .font(.system(size: 48))
                                     .saturation(target ? 0 : 1)
                                     .opacity(target && !game.matched.contains(item.id) ? 0.45 : 1)
-                                    .frame(maxWidth: .infinity, minHeight: 104)
+                                    .frame(maxWidth: .infinity, minHeight: cardHeight)
                                     .background(game.matched.contains(item.id) ? Color.mint.opacity(0.5) :
                                         (selectedSource == item.id && !target ? Color.yellow.opacity(0.5) :
                                         (wrongTarget == item.id && target ? Color.red.opacity(0.2) :
@@ -75,6 +77,7 @@ struct ShadowPlayScreen: View {
                         }
                     }
                 }
+            }
             }
             Text("⭐ \(game.matched.count)/\(game.items.count)").font(.system(size: 22))
         }
