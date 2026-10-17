@@ -37,7 +37,8 @@ struct ShadowPlayScreen: View {
             }
             GeometryReader { geometry in
                     HStack(alignment: .top, spacing: 10) {
-                let cardHeight = max(76, (geometry.size.height - CGFloat((isShadow ? game.items.count : (game.items.count <= 3 ? game.items.count : (game.items.count + 1) / 2)) - 1) * 8) / CGFloat(isShadow ? game.items.count : (game.items.count <= 3 ? game.items.count : (game.items.count + 1) / 2)))
+                let rows = game.items.count
+                let cardHeight = max(76, (geometry.size.height - CGFloat(rows - 1) * 8) / CGFloat(rows))
                 ForEach([false, true], id: \.self) { target in
                     let entries = target ? game.targets : game.items
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 8)], spacing: 8) {
