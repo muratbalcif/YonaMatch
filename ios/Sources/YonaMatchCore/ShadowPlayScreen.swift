@@ -5,6 +5,7 @@ struct ShadowPlayScreen: View {
     let onComplete: (Int, Bool) -> Void
     @State private var game: ShadowGame
     @State private var selectedSource: String?
+    @State private var selectedRight: String?
     @State private var hintUsed = false
     @State private var wrongTarget: String?
 
@@ -19,6 +20,7 @@ struct ShadowPlayScreen: View {
         let correct = game.match(sourceId: source, targetId: target)
         wrongTarget = correct ? nil : target
         selectedSource = nil
+        selectedRight = nil
         if game.isComplete { onComplete(game.attempts, hintUsed) }
     }
 
@@ -29,6 +31,7 @@ struct ShadowPlayScreen: View {
                 Spacer()
                 Button {
                     selectedSource = game.items.first(where: { !game.matched.contains($0.id) })?.id
+                    selectedRight = nil
                     if selectedSource != nil { hintUsed = true }
                 } label: { Text("💡").font(.system(size: 34)) }
             }
@@ -40,8 +43,11 @@ struct ShadowPlayScreen: View {
                             Button {
                                 if target {
                                     if let source = selectedSource { submit(source, item.id) }
+                                    else { selectedRight = item.id }
+                                    else { selectedRight = item.id }
                                 } else {
-                                    selectedSource = item.id
+                                    if let right = selectedRight { submit(item.id, right) }
+                                    else { selectedSource = item.id }
                                 }
                             } label: {
                                 Text(game.matched.contains(item.id) ? "✓" : item.emoji)
@@ -52,7 +58,8 @@ struct ShadowPlayScreen: View {
                                     .background(game.matched.contains(item.id) ? Color.mint.opacity(0.5) :
                                         (selectedSource == item.id && !target ? Color.yellow.opacity(0.5) :
                                         (wrongTarget == item.id && target ? Color.red.opacity(0.2) :
-                                        (target ? Color.purple.opacity(0.2) : Color.mint.opacity(0.2)))),
+                                        (selectedRight == item.id && target ? Color.yellow.opacity(0.5) :
+                                        (target ? Color.purple.opacity(0.2) : Color.mint.opacity(0.2))))),
                                         in: RoundedRectangle(cornerRadius: 16))
                             }
                             .disabled(game.matched.contains(item.id))
