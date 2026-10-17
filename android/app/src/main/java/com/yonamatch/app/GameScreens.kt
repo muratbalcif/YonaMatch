@@ -1,5 +1,6 @@
 package com.yonamatch.app
 
+import android.annotation.SuppressLint
 import androidx.compose.runtime.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -106,6 +107,7 @@ fun AssociationGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> 
 }
 
 /** Shared matching mechanics; each mode has its own screen entry and isolated round. */
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 private fun PairMatchingScreen(
     mode: Int,
