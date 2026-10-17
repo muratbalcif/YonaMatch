@@ -178,7 +178,7 @@ private fun YonaMatchApp() {
                     Text("Merhaba Yona! 👋", modifier = Modifier.weight(1f),
                         fontSize = 20.sp, fontWeight = FontWeight.Bold, color = navy)
                     Text("⭐", fontSize = 25.sp)
-                    Text(" ${gameProgress.totalStars()}", fontSize = 19.sp, fontWeight = FontWeight.Bold, color = navy)
+                    Text(" ${listOf("memory", "shadow", "shape", "color", "halves", "association").sumOf { game -> (1..20).sumOf { stage -> gameProgress.bestStars(game, stage) } }}", fontSize = 19.sp, fontWeight = FontWeight.Bold, color = navy)
                 }
                 Surface(
                     modifier = Modifier.fillMaxWidth().clickable {
