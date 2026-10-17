@@ -66,12 +66,18 @@ struct ShadowPlayScreen: View {
                                         in: RoundedRectangle(cornerRadius: 16))
                             }
                             .disabled(game.matched.contains(item.id))
-                            .onDrag { NSItemProvider(object: item.id as NSString) }
+                            .onDrag { NSItemProvider(object: (target ? "right:" : "left:")+item.id as NSString) }
                             .onDrop(of: [.plainText], isTargeted: nil) { providers in
-                                guard target, let provider = providers.first else { return false }
+                                guard !game.matched.contains(item.id), let provider = providers.first else { return false }
                                 _ = provider.loadObject(ofClass: NSString.self) { value, _ in
-                                    guard let source = value as? String else { return }
-                                    DispatchQueue.main.async { submit(source, item.id) }
+                                    guard let payload = value as? String else { return }
+                                    if target, payload.hasPrefix("left:") {
+                                        let source = String(payload.dropFirst(5))
+                                        DispatchQueue.main.async { submit(source, item.id) }
+                                    } else if !target, payload.hasPrefix("right:") {
+                                        let target = String(payload.dropFirst(6))
+                                        DispatchQueue.main.async { submit(item.id, target) }
+                                    }
                                 }
                                 return true
                             }

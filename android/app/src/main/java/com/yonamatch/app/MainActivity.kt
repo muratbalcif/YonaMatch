@@ -137,6 +137,27 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun YonaMatchApp() {
     val context = LocalContext.current
+    val profilePrefs = remember(context) { context.getSharedPreferences("yonamatch_child_profile", 0) }
+    var profileReady by remember { mutableStateOf(profilePrefs.getBoolean("completed", false)) }
+    val childName = profilePrefs.getString("name", "Yona") ?: "Yona"
+    val childAvatar = profilePrefs.getString("avatar", "🦁") ?: "🦁"
+    var openingStage by remember { mutableIntStateOf(if (profileReady) 2 else 0) }
+    if (openingStage < 2) {
+        OpeningScreen(
+            splash = openingStage == 0,
+            onSplashFinished = { openingStage = 1 },
+            onStart = { openingStage = 2 }
+        )
+        return
+    }
+    if (!profileReady) {
+        ChildProfileScreen { name, avatar, age ->
+            profilePrefs.edit().putString("name", name).putString("avatar", avatar)
+                .putString("age", age).putBoolean("completed", true).apply()
+            profileReady = true
+        }
+        return
+    }
     val levels = remember(context) { LevelRepository(context).memoryLevels() }
     val progress = remember(context) { ProgressRepository(context) }
     val gameProgress = remember(context) { GameProgressStore(context) }
@@ -170,17 +191,61 @@ private fun YonaMatchApp() {
         }
         when (page) {
             "home" -> {
-                Text("Merhaba, minik kaşif! 👋", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = navy)
-                Text("Eşleştir, keşfet, eğlen!", color = navy)
-                Surface(color = mint.copy(alpha = 0.22f), shape = RoundedCornerShape(22.dp)) {
-                    Column(Modifier.fillMaxWidth().padding(20.dp)) {
-                        Text("🦁  Maceraya devam et!", fontSize = 21.sp, fontWeight = FontWeight.Bold)
-                        Text("Hafıza Kartları · Bölüm $unlocked")
-                        Button(onClick = { selected = 0; page = "levels" }, colors = ButtonDefaults.buttonColors(containerColor = mint)) { Text("Devam Et", color = navy) }
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Surface(color = Color(0xFFFFE4B5), shape = RoundedCornerShape(50)) {
+                        Text(childAvatar, modifier = Modifier.padding(9.dp), fontSize = 29.sp)
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Text("Merhaba $childName! 👋", modifier = Modifier.weight(1f),
+                        fontSize = 20.sp, fontWeight = FontWeight.Bold, color = navy)
+                    Text("⭐", fontSize = 25.sp)
+                    Text(" ${listOf("memory", "shadow", "shape", "color", "halves", "association").sumOf { game -> (1..20).sumOf { stage -> gameProgress.bestStars(game, stage) } }}", fontSize = 19.sp, fontWeight = FontWeight.Bold, color = navy)
+                }
+                Surface(
+                    modifier = Modifier.fillMaxWidth().clickable {
+                        selected = 0
+                        level = unlocked.coerceIn(1, 20)
+                        round++
+                        page = "game"
+                    },
+                    color = Color(0xFFC7F1E3), shape = RoundedCornerShape(24.dp)
+                ) {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("🦁", fontSize = 62.sp)
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Oynamaya Devam Et", fontSize = 14.sp, color = Color(0xFF267C73))
+                            Text("Hafıza Kartları", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = navy)
+                            Text("Bölüm $unlocked", fontSize = 15.sp, color = navy)
+                            LinearProgressIndicator(
+                                progress = { unlocked / 20f },
+                                modifier = Modifier.fillMaxWidth().height(7.dp),
+                                color = Color(0xFF2FBF83),
+                                trackColor = Color.White
+                            )
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        Surface(color = Color(0xFFFFC844), shape = RoundedCornerShape(50),
+                            modifier = Modifier.size(52.dp)) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text("▶", fontSize = 25.sp, color = Color.White)
+                            }
+                        }
                     }
                 }
-                Text("Oyunlarımız", fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 ModeGrid(onSelect = { selected = it; page = "levels" })
+                HorizontalDivider(color = Color(0xFFE9E3DD))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("⌂", fontSize = 32.sp, color = Color(0xFF164D99))
+                        Text("Ana Sayfa", fontSize = 13.sp, color = navy)
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable { page = "levels" }) {
+                        Text("🏆", fontSize = 30.sp)
+                        Text("Bölümler", fontSize = 13.sp, color = navy)
+                    }
+                }
             }
             "levels" -> {
                 Text(modes[selected].emoji + " " + modes[selected].title, fontSize = 23.sp, fontWeight = FontWeight.Bold)
@@ -256,67 +321,86 @@ private fun YonaMatchApp() {
                 }
             }
             "result" -> {
-                var celebrationVisible by remember(selected, level) { mutableStateOf(false) }
-                LaunchedEffect(selected, level) { celebrationVisible = true }
-                val celebrationScale by animateFloatAsState(
-                    targetValue = if (celebrationVisible) 1f else 0.65f,
-                    animationSpec = tween(durationMillis = 480),
-                    label = "celebration"
-                )
-                val displayedStars = resultStars
-                Spacer(Modifier.height(24.dp))
-                Surface(
-                    color = yellow.copy(alpha = 0.22f),
-                    shape = RoundedCornerShape(32.dp),
-                    modifier = Modifier.fillMaxWidth()
+                val modeEmoji = modes[selected].emoji
+                val completed = resultStars.coerceIn(0, 3)
+                Column(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Column(
-                        Modifier.padding(vertical = 30.dp, horizontal = 16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    Box(
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text("🎊", fontSize = 76.sp, modifier = Modifier.graphicsLayer {
-                            scaleX = celebrationScale
-                            scaleY = celebrationScale
-                        })
-                        Text("⭐".repeat(displayedStars), fontSize = 40.sp)
-                        Text("🌈  🦁  🎈", fontSize = 42.sp)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("⭐  ✨  🌟", fontSize = 37.sp)
+                            Text(if (selected == 0) "🦁" else modeEmoji, fontSize = 126.sp)
+                            Text("🌈  🌿  🎉", fontSize = 37.sp)
+                        }
                     }
-                }
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = {
-                            if (selected == 1) shadowRound++
-                            else if (selected in 2..5) matchRound++
-                            else round++
+                    Text("Harika!", fontSize = 48.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFFF34E45))
+                    Text("Bölümü tamamladın!", fontSize = 21.sp, fontWeight = FontWeight.SemiBold, color = navy)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        repeat(3) { index ->
+                            Text(if (index < completed) "⭐" else "☆", fontSize = 58.sp)
+                        }
+                    }
+                    Surface(
+                        color = Color(0xFFF6EFE7),
+                        shape = RoundedCornerShape(24.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp)
+                    ) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("🎯  Deneme:", fontSize = 18.sp, color = navy)
+                                Text("Tamamlandı", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = navy)
+                            }
+                            HorizontalDivider(color = Color.White)
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("💡  İpucu:", fontSize = 18.sp, color = navy)
+                                Text("⭐ $completed / 3", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = navy)
+                            }
+                            HorizontalDivider(color = Color.White)
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("🏆  Bölüm:", fontSize = 18.sp, color = navy)
+                                Text("$level", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = navy)
+                            }
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Button(onClick = { page = "home" }, modifier = Modifier.weight(1f).height(68.dp),
+                            shape = RoundedCornerShape(22.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC5E6FF))) {
+                            Text("⌂", fontSize = 38.sp, color = Color(0xFF12478E))
+                        }
+                        Button(onClick = {
+                            if (selected == 1) shadowRound++ else if (selected in 2..5) matchRound++ else round++
                             page = "game"
-                        },
-                        modifier = Modifier.weight(1f).height(68.dp)
-                    ) { Text("↻", fontSize = 32.sp) }
-                    Button(
-                        onClick = {
-                            if (level >= 20) {
-                                page = "levels"
-                            } else {
+                        }, modifier = Modifier.weight(1f).height(68.dp),
+                            shape = RoundedCornerShape(22.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF37ACF3))) {
+                            Text("↻", fontSize = 38.sp, color = Color.White)
+                        }
+                        Button(onClick = {
+                            if (level >= 20) page = "levels"
+                            else {
                                 level++
-                                if (selected == 1) shadowRound++
-                                else if (selected in 2..5) matchRound++
-                                else round++
+                                if (selected == 1) shadowRound++ else if (selected in 2..5) matchRound++ else round++
                                 page = "game"
                             }
-                        },
-                        modifier = Modifier.weight(2f).height(68.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = mint)
-                    ) { Text(if (level == 20) "🏠" else "▶", fontSize = 34.sp, color = navy) }
+                        }, modifier = Modifier.weight(1f).height(68.dp),
+                            shape = RoundedCornerShape(22.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3CCB92))) {
+                            Text("➜", fontSize = 38.sp, color = Color.White)
+                        }
+                    }
                 }
-                OutlinedButton(
-                    onClick = { page = "levels" },
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
-                ) { Text("▦", fontSize = 28.sp) }
-
             }
         }
     }
@@ -324,16 +408,28 @@ private fun YonaMatchApp() {
 
 @Composable
 private fun ModeGrid(onSelect: (Int) -> Unit) {
-    LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.height(480.dp), userScrollEnabled = false,
-        horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val colors = listOf(
+        Color(0xFFFFE8E8), Color(0xFFEDE3FF), Color(0xFFFFEDCA),
+        Color(0xFFFFE1E8), Color(0xFFFFE0DA), Color(0xFFFFF0D1)
+    )
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        modifier = Modifier.height(336.dp),
+        userScrollEnabled = false,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
         itemsIndexed(modes) { index, mode ->
             Surface(
-                modifier = Modifier.fillMaxWidth().height(145.dp).clickable { onSelect(index) },
-                color = mode.tint.copy(alpha = 0.22f), shape = RoundedCornerShape(20.dp)
+                modifier = Modifier.fillMaxWidth().height(160.dp).clickable { onSelect(index) },
+                color = colors[index], shape = RoundedCornerShape(22.dp),
+                shadowElevation = 2.dp
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                    Text(mode.emoji, fontSize = 46.sp)
-                    Text(mode.title, fontWeight = FontWeight.Bold, color = navy, textAlign = TextAlign.Center, fontSize = 14.sp)
+                Column(Modifier.padding(6.dp), horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceEvenly) {
+                    Text(mode.emoji, fontSize = 49.sp)
+                    Text(mode.title, fontWeight = FontWeight.SemiBold, color = Color(0xFF193A66),
+                        textAlign = TextAlign.Center, fontSize = 12.sp, lineHeight = 15.sp)
                 }
             }
         }

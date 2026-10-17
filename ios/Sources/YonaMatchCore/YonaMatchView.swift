@@ -5,6 +5,11 @@ public struct YonaMatchView: View {
     private let levels = (try? LevelRepository.memoryLevels()) ?? []
     private let progress = ProgressRepository()
     private let gameProgress = GameProgressStore()
+    @AppStorage("yonamatch_profile_completed") private var profileCompleted = false
+    @AppStorage("yonamatch_profile_name") private var profileName = "Yona"
+    @AppStorage("yonamatch_profile_avatar") private var profileAvatar = "🦁"
+    @AppStorage("yonamatch_profile_age") private var profileAge = "3-4"
+    @State private var openingStage = 0
     @State private var resultStars = 3
     @AppStorage("shape_unlocked") private var shapeUnlocked = 1
     @AppStorage("color_unlocked") private var colorUnlocked = 1
@@ -115,6 +120,19 @@ public struct YonaMatchView: View {
     public init() {}
 
     public var body: some View {
+        Group {
+        if !profileCompleted && openingStage < 2 {
+            OpeningScreen(splash: openingStage == 0,
+                          onSplashFinished: { openingStage = 1 },
+                          onStart: { openingStage = 2 })
+        } else if !profileCompleted {
+            ChildProfileScreen { name, avatar, age in
+                profileName = name
+                profileAvatar = avatar
+                profileAge = age
+                profileCompleted = true
+            }
+        } else {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 HStack {
@@ -127,7 +145,7 @@ public struct YonaMatchView: View {
                 }
                 switch page {
                 case .home:
-                    Text("Merhaba, minik kaşif! 👋").font(.title2.bold())
+                    Text("Merhaba \(profileName)! 👋").font(.title2.bold())
                     Text("Eşleştir, keşfet, eğlen!")
                     VStack(alignment: .leading, spacing: 12) {
                         Text("🦁 Maceraya devam et!").font(.title3.bold())
@@ -261,6 +279,8 @@ public struct YonaMatchView: View {
             .foregroundStyle(navy)
         }
         .background(cream.ignoresSafeArea())
+        }
+        }
     }
 
 }

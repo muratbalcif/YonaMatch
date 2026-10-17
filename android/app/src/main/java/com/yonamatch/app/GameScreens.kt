@@ -14,6 +14,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.times
 import com.yonamatch.app.data.AssociationLevelRepository
 import com.yonamatch.app.data.MatchGame
@@ -36,7 +42,6 @@ fun AssociationGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> 
     var selectedRight by remember(level, round) { mutableStateOf<String?>(null) }
     var hintUsed by remember(level, round) { mutableStateOf(false) }
     var revision by remember(level, round) { mutableIntStateOf(0) }
-    val cardHeight = ((LocalConfiguration.current.screenHeightDp.dp - 220.dp - 8.dp * (if (game.items.size <= 3) game.items.size - 1 else (game.items.size + 1) / 2 - 1)) / (if (game.items.size <= 3) game.items.size else (game.items.size + 1) / 2)).coerceAtLeast(76.dp)
     var incorrect by remember(level, round) { mutableStateOf<String?>(null) }
     val completed = game.matched.toSet()
     fun submit(source: String, target: String) {
@@ -58,10 +63,13 @@ fun AssociationGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> 
                 if (selection != null) hintUsed = true
             }) { Text("💡", fontSize = 34.sp) }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            val rows = game.items.size
+            val cardHeight = ((maxHeight - 10.dp * (rows - 1)) / rows).coerceAtLeast(58.dp)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxSize()) {
             LazyVerticalGrid(
-                columns = GridCells.Fixed(if (game.items.size <= 3) 1 else 2),
-                modifier = Modifier.weight(1f).height(cardHeight * (if (game.items.size <= 3) game.items.size else (game.items.size + 1) / 2) + 8.dp * (if (game.items.size <= 3) game.items.size - 1 else (game.items.size + 1) / 2 - 1)),
+                columns = GridCells.Fixed(1),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
                 userScrollEnabled = false,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -70,17 +78,17 @@ fun AssociationGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> 
                     Surface(
                         modifier = Modifier.fillMaxWidth().height(cardHeight).clickable(enabled = item.id !in completed) { if (selectedRight != null) submit(item.id, selectedRight!!) else selection = item.id },
                         color = if (item.id in completed) Color(0xFFBDEDD7) else if (selection == item.id) Color(0xFFFFE4A0) else Color(0xFFE0F7EC),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(22.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Text(if (item.id in completed) "✓" else item.symbol, fontSize = 46.sp)
+                            Text(if (item.id in completed) "✓" else item.symbol, fontSize = 60.sp)
                         }
                     }
                 }
             }
             LazyVerticalGrid(
-                columns = GridCells.Fixed(if (game.targets.size <= 3) 1 else 2),
-                modifier = Modifier.weight(1f).height(cardHeight * (if (game.targets.size <= 3) game.targets.size else (game.targets.size + 1) / 2) + 8.dp * (if (game.targets.size <= 3) game.targets.size - 1 else (game.targets.size + 1) / 2 - 1)),
+                columns = GridCells.Fixed(1),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
                 userScrollEnabled = false,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -92,14 +100,15 @@ fun AssociationGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> 
                             if (selection != null) submit(selection!!, item.id) else selectedRight = item.id
                         },
                         color = if (sourceId in completed) Color(0xFFBDEDD7) else if (incorrect == item.id) Color(0xFFFFD6DC) else if (selectedRight == item.id) Color(0xFFFFE4A0) else Color(0xFFECE6FF),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(22.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Text(if (sourceId in completed) "✓" else item.symbol, fontSize = 46.sp)
+                            Text(if (sourceId in completed) "✓" else item.symbol, fontSize = 60.sp)
                         }
                     }
                 }
             }
+        }
         }
         if (incorrect != null) Text("↻", fontSize = 28.sp, color = Color(0xFFCC4455))
         if (revision > 0) Text("⭐ ${completed.size}/${game.items.size}", fontSize = 22.sp)
@@ -127,6 +136,9 @@ private fun PairMatchingScreen(
     var revision by remember(type, level, round) { mutableIntStateOf(0) }
     var wrongTarget by remember(type, level, round) { mutableStateOf<String?>(null) }
     val completed = game.matched.toSet()
+    val cardBounds = remember(type, level, round) { mutableMapOf<String, Rect>() }
+    var dragging by remember(type, level, round) { mutableStateOf<Pair<Boolean, String>?>(null) }
+    var dragPosition by remember(type, level, round) { mutableStateOf(Offset.Zero) }
     fun submit(source: String, target: String) {
         if (game.complete) return
         val correct = game.match(source, target)
@@ -162,7 +174,35 @@ private fun PairMatchingScreen(
                     items(entries, key = { it.id }) { item ->
                         val solved = item.id in completed
                         Surface(
-                            modifier = Modifier.fillMaxWidth().height(cardHeight).clickable(enabled = !solved) {
+                            modifier = Modifier.fillMaxWidth().height(cardHeight)
+                                .onGloballyPositioned { cardBounds[(if (isTarget) "R:" else "L:") + item.id] = it.boundsInRoot() }
+                                .pointerInput(item.id, isTarget, solved) {
+                                    if (!solved) detectDragGestures(
+                                        onDragStart = { start ->
+                                            dragging = isTarget to item.id
+                                            dragPosition = (cardBounds[(if (isTarget) "R:" else "L:") + item.id]?.topLeft ?: Offset.Zero) + start
+                                        },
+                                        onDragEnd = {
+                                            val source = dragging
+                                            if (source != null) {
+                                                val destination = cardBounds.entries.firstOrNull { (key, bounds) ->
+                                                    bounds.contains(dragPosition) && key.startsWith(if (source.first) "L:" else "R:")
+                                                }
+                                                if (destination != null) {
+                                                    if (source.first) submit(destination.key.removePrefix("L:"), source.second)
+                                                    else submit(source.second, destination.key.removePrefix("R:"))
+                                                }
+                                            }
+                                            dragging = null
+                                        },
+                                        onDragCancel = { dragging = null },
+                                        onDrag = { change, delta ->
+                                            change.consume()
+                                            dragPosition += delta
+                                        }
+                                    )
+                                }
+                                .clickable(enabled = !solved) {
                                 if (isTarget) {
                                     if (selection != null) submit(selection!!, item.id) else selectedRight = item.id
                                 } else {
@@ -233,12 +273,12 @@ fun MemoryPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit)
             mismatch = false
         }
     }
-    val columns = if (cards.size <= 6) 3 else 4
+    val columns = 3
     val rows = (cards.size + columns - 1) / columns
-    val cardHeight = ((LocalConfiguration.current.screenHeightDp.dp - 210.dp - 8.dp * (rows - 1)) / rows).coerceAtLeast(76.dp)
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("🦁", fontSize = 32.sp)
+            Text("Bölüm $level", fontSize = 20.sp, color = Color(0xFF174577))
             Spacer(Modifier.weight(1f))
             TextButton(onClick = {
                 val first = cards.indices.firstOrNull { it !in matched }
@@ -247,14 +287,17 @@ fun MemoryPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit)
                     hintUsed = true
                     hintPair = setOf(first, second)
                 }
-            }) { Text("💡", fontSize = 34.sp) }
+            }) { Text("💡 İpucu", fontSize = 18.sp, color = Color(0xFF174577)) }
         }
-        LazyVerticalGrid(
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            val cardWidth = (maxWidth - 20.dp) / columns
+            val cardHeight = minOf(cardWidth * 1.05f, (maxHeight - 10.dp * (rows - 1)) / rows)
+            LazyVerticalGrid(
             columns = GridCells.Fixed(columns),
-            modifier = Modifier.height(cardHeight * rows + 8.dp * (rows - 1)),
+            modifier = Modifier.fillMaxSize(),
             userScrollEnabled = false,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             items(cards.size) { index ->
                 val open = index in revealed || index in matched || index in hintPair
@@ -275,14 +318,16 @@ fun MemoryPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit)
                             }
                         } else revealed = next
                     },
-                    color = if (index in matched) Color(0xFFBDEDD7) else Color(0xFFD7EBFF),
-                    shape = RoundedCornerShape(16.dp)
+                    color = if (index in matched) Color(0xFFFFE5A5) else if (open) Color.White else Color(0xFF79BFF9),
+                    shape = RoundedCornerShape(15.dp),
+                    shadowElevation = 4.dp
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text(if (open) cards[index] else "❔", fontSize = if (rows <= 2) 60.sp else if (rows == 3) 48.sp else 40.sp)
+                        Text(if (open) cards[index] else "?", fontSize = if (open) 44.sp else 50.sp, color = if (open) Color(0xFF213D65) else Color(0xFFDBF0FF))
                     }
                 }
             }
+        }
         }
     }
 }
@@ -297,7 +342,6 @@ fun ShadowPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit)
     var hintUsed by remember(level, round) { mutableStateOf(false) }
     var revision by remember(level, round) { mutableIntStateOf(0) }
     val completed = game.matched.toSet()
-    val shadowCardHeight = ((LocalConfiguration.current.screenHeightDp.dp - 220.dp - 8.dp * (game.items.size - 1)) / game.items.size).coerceAtLeast(78.dp)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("🐘", fontSize = 32.sp)
@@ -308,12 +352,14 @@ fun ShadowPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit)
                 if (selection != null) hintUsed = true
             }) { Text("💡", fontSize = 34.sp) }
         }
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            val shadowCardHeight = ((maxHeight - 10.dp * (game.items.size - 1)) / game.items.size).coerceAtLeast(58.dp)
+            Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             listOf(false, true).forEach { target ->
                 val entries = if (target) game.targets else game.items
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(1),
-                    modifier = Modifier.weight(1f).height(entries.size * shadowCardHeight + 8.dp * (entries.size - 1)),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                     userScrollEnabled = false,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -341,16 +387,17 @@ fun ShadowPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit)
                             },
                             color = if (solved) Color(0xFFBDEDD7) else if ((target && selectedRight == item.id) || (!target && selection == item.id)) Color(0xFFFFE4A0)
                                 else if (target) Color(0xFFECE6FF) else Color(0xFFE0F7EC),
-                            shape = RoundedCornerShape(16.dp)
+                            shape = RoundedCornerShape(22.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Text(if (solved) "✓" else item.emoji, fontSize = 48.sp,
+                                Text(if (solved) "✓" else item.emoji, fontSize = 60.sp,
                                     color = if (target) Color.DarkGray.copy(alpha = 0.4f) else Color.Black)
                             }
                         }
                     }
                 }
             }
+        }
         }
         if (revision > 0) Text("⭐ ${completed.size}/${game.items.size}", fontSize = 22.sp)
     }
