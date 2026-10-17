@@ -170,17 +170,61 @@ private fun YonaMatchApp() {
         }
         when (page) {
             "home" -> {
-                Text("Merhaba, minik kaşif! 👋", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = navy)
-                Text("Eşleştir, keşfet, eğlen!", color = navy)
-                Surface(color = mint.copy(alpha = 0.22f), shape = RoundedCornerShape(22.dp)) {
-                    Column(Modifier.fillMaxWidth().padding(20.dp)) {
-                        Text("🦁  Maceraya devam et!", fontSize = 21.sp, fontWeight = FontWeight.Bold)
-                        Text("Hafıza Kartları · Bölüm $unlocked")
-                        Button(onClick = { selected = 0; page = "levels" }, colors = ButtonDefaults.buttonColors(containerColor = mint)) { Text("Devam Et", color = navy) }
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Surface(color = Color(0xFFFFE4B5), shape = RoundedCornerShape(50)) {
+                        Text("🦁", modifier = Modifier.padding(9.dp), fontSize = 29.sp)
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Text("Merhaba Yona! 👋", modifier = Modifier.weight(1f),
+                        fontSize = 20.sp, fontWeight = FontWeight.Bold, color = navy)
+                    Text("⭐", fontSize = 25.sp)
+                    Text(" ${gameProgress.totalStars()}", fontSize = 19.sp, fontWeight = FontWeight.Bold, color = navy)
+                }
+                Surface(
+                    modifier = Modifier.fillMaxWidth().clickable {
+                        selected = 0
+                        level = unlocked.coerceIn(1, 20)
+                        round++
+                        page = "game"
+                    },
+                    color = Color(0xFFC7F1E3), shape = RoundedCornerShape(24.dp)
+                ) {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("🦁", fontSize = 62.sp)
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Oynamaya Devam Et", fontSize = 14.sp, color = Color(0xFF267C73))
+                            Text("Hafıza Kartları", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = navy)
+                            Text("Bölüm $unlocked", fontSize = 15.sp, color = navy)
+                            LinearProgressIndicator(
+                                progress = { unlocked / 20f },
+                                modifier = Modifier.fillMaxWidth().height(7.dp),
+                                color = Color(0xFF2FBF83),
+                                trackColor = Color.White
+                            )
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        Surface(color = Color(0xFFFFC844), shape = RoundedCornerShape(50),
+                            modifier = Modifier.size(52.dp)) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text("▶", fontSize = 25.sp, color = Color.White)
+                            }
+                        }
                     }
                 }
-                Text("Oyunlarımız", fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 ModeGrid(onSelect = { selected = it; page = "levels" })
+                HorizontalDivider(color = Color(0xFFE9E3DD))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("⌂", fontSize = 32.sp, color = Color(0xFF164D99))
+                        Text("Ana Sayfa", fontSize = 13.sp, color = navy)
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable { page = "levels" }) {
+                        Text("🏆", fontSize = 30.sp)
+                        Text("Bölümler", fontSize = 13.sp, color = navy)
+                    }
+                }
             }
             "levels" -> {
                 Text(modes[selected].emoji + " " + modes[selected].title, fontSize = 23.sp, fontWeight = FontWeight.Bold)
@@ -343,16 +387,28 @@ private fun YonaMatchApp() {
 
 @Composable
 private fun ModeGrid(onSelect: (Int) -> Unit) {
-    LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.height(480.dp), userScrollEnabled = false,
-        horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val colors = listOf(
+        Color(0xFFFFE8E8), Color(0xFFEDE3FF), Color(0xFFFFEDCA),
+        Color(0xFFFFE1E8), Color(0xFFFFE0DA), Color(0xFFFFF0D1)
+    )
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        modifier = Modifier.height(336.dp),
+        userScrollEnabled = false,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
         itemsIndexed(modes) { index, mode ->
             Surface(
-                modifier = Modifier.fillMaxWidth().height(145.dp).clickable { onSelect(index) },
-                color = mode.tint.copy(alpha = 0.22f), shape = RoundedCornerShape(20.dp)
+                modifier = Modifier.fillMaxWidth().height(160.dp).clickable { onSelect(index) },
+                color = colors[index], shape = RoundedCornerShape(22.dp),
+                shadowElevation = 2.dp
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                    Text(mode.emoji, fontSize = 46.sp)
-                    Text(mode.title, fontWeight = FontWeight.Bold, color = navy, textAlign = TextAlign.Center, fontSize = 14.sp)
+                Column(Modifier.padding(6.dp), horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceEvenly) {
+                    Text(mode.emoji, fontSize = 49.sp)
+                    Text(mode.title, fontWeight = FontWeight.SemiBold, color = Color(0xFF193A66),
+                        textAlign = TextAlign.Center, fontSize = 12.sp, lineHeight = 15.sp)
                 }
             }
         }
