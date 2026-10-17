@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalConfiguration
 import com.yonamatch.app.data.AssociationLevelRepository
 import com.yonamatch.app.data.MatchGame
 
@@ -30,8 +31,10 @@ fun AssociationGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> 
     val targets = remember(level) { pairs.associate { it.source.id to it.target } }
     val game = remember(level, round) { MatchGame(pairs.map { it.source }, targets) }
     var selection by remember(level, round) { mutableStateOf<String?>(null) }
+    var selectedRight by remember(level, round) { mutableStateOf<String?>(null) }
     var hintUsed by remember(level, round) { mutableStateOf(false) }
     var revision by remember(level, round) { mutableIntStateOf(0) }
+    val cardHeight = (LocalConfiguration.current.screenHeightDp.dp - 220.dp - (if (game.items.size <= 3) 0.dp else 8.dp) * (if (game.items.size <= 3) game.items.size - 1 else (game.items.size + 1) / 2 - 1)) / (if (game.items.size <= 3) game.items.size else (game.items.size + 1) / 2)
     var incorrect by remember(level, round) { mutableStateOf<String?>(null) }
     val completed = game.matched.toSet()
     fun submit(source: String, target: String) {
@@ -40,6 +43,7 @@ fun AssociationGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> 
         revision++
         incorrect = if (correct) null else target
         selection = null
+        selectedRight = null
         if (game.complete) onComplete(game.attempts, hintUsed)
     }
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -48,20 +52,21 @@ fun AssociationGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> 
             Spacer(Modifier.weight(1f))
             TextButton(onClick = {
                 selection = game.items.firstOrNull { it.id !in completed }?.id
+                selectedRight = null
                 if (selection != null) hintUsed = true
             }) { Text("💡", fontSize = 34.sp) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(if (game.items.size <= 3) 1 else 2),
-                modifier = Modifier.weight(1f).height(if (game.items.size <= 3) 354.dp else if (game.items.size <= 4) 228.dp else 342.dp),
+                modifier = Modifier.weight(1f).height(cardHeight * (if (game.items.size <= 3) game.items.size else (game.items.size + 1) / 2) + 8.dp * (if (game.items.size <= 3) game.items.size - 1 else (game.items.size + 1) / 2 - 1)),
                 userScrollEnabled = false,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(game.items, key = { it.id }) { item ->
                     Surface(
-                        modifier = Modifier.fillMaxWidth().height(110.dp).clickable(enabled = item.id !in completed) { selection = item.id },
+                        modifier = Modifier.fillMaxWidth().height(cardHeight).clickable(enabled = item.id !in completed) { if (selectedRight != null) submit(item.id, selectedRight!!) else selection = item.id },
                         color = if (item.id in completed) Color(0xFFBDEDD7) else if (selection == item.id) Color(0xFFFFE4A0) else Color(0xFFE0F7EC),
                         shape = RoundedCornerShape(16.dp)
                     ) {
@@ -73,7 +78,7 @@ fun AssociationGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> 
             }
             LazyVerticalGrid(
                 columns = GridCells.Fixed(if (game.targets.size <= 3) 1 else 2),
-                modifier = Modifier.weight(1f).height(if (game.targets.size <= 3) 354.dp else if (game.targets.size <= 4) 228.dp else 342.dp),
+                modifier = Modifier.weight(1f).height(cardHeight * (if (game.targets.size <= 3) game.targets.size else (game.targets.size + 1) / 2) + 8.dp * (if (game.targets.size <= 3) game.targets.size - 1 else (game.targets.size + 1) / 2 - 1)),
                 userScrollEnabled = false,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -81,10 +86,10 @@ fun AssociationGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> 
                 items(game.targets, key = { it.id }) { item ->
                     val sourceId = targets.entries.first { it.value.id == item.id }.key
                     Surface(
-                        modifier = Modifier.fillMaxWidth().height(110.dp).clickable(enabled = selection != null && sourceId !in completed) {
-                            selection?.let { submit(it, item.id) }
+                        modifier = Modifier.fillMaxWidth().height(cardHeight).clickable(enabled = sourceId !in completed) {
+                            if (selection != null) submit(selection!!, item.id) else selectedRight = item.id
                         },
-                        color = if (sourceId in completed) Color(0xFFBDEDD7) else if (incorrect == item.id) Color(0xFFFFD6DC) else Color(0xFFECE6FF),
+                        color = if (sourceId in completed) Color(0xFFBDEDD7) else if (incorrect == item.id) Color(0xFFFFD6DC) else if (selectedRight == item.id) Color(0xFFFFE4A0) else Color(0xFFECE6FF),
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
@@ -114,8 +119,10 @@ private fun PairMatchingScreen(
     }
     val game = remember(type, level, round) { MatchGame(levelData.items) }
     var selection by remember(type, level, round) { mutableStateOf<String?>(null) }
+    var selectedRight by remember(type, level, round) { mutableStateOf<String?>(null) }
     var hintUsed by remember(type, level, round) { mutableStateOf(false) }
     var revision by remember(type, level, round) { mutableIntStateOf(0) }
+    val cardHeight = (LocalConfiguration.current.screenHeightDp.dp - 220.dp - 8.dp * (if (game.items.size <= 3) game.items.size - 1 else (game.items.size + 1) / 2 - 1)) / (if (game.items.size <= 3) game.items.size else (game.items.size + 1) / 2)
     var wrongTarget by remember(type, level, round) { mutableStateOf<String?>(null) }
     val completed = game.matched.toSet()
     fun submit(source: String, target: String) {
@@ -124,6 +131,7 @@ private fun PairMatchingScreen(
         revision++
         wrongTarget = if (correct) null else target
         selection = null
+        selectedRight = null
         if (game.complete) onComplete(game.attempts, hintUsed)
     }
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -132,6 +140,7 @@ private fun PairMatchingScreen(
             Spacer(Modifier.weight(1f))
             TextButton(onClick = {
                 selection = game.items.firstOrNull { it.id !in completed }?.id
+                selectedRight = null
                 if (selection != null) hintUsed = true
             }) { Text("💡", fontSize = 34.sp) }
         }
@@ -148,13 +157,15 @@ private fun PairMatchingScreen(
                     items(entries, key = { it.id }) { item ->
                         val solved = item.id in completed
                         Surface(
-                            modifier = Modifier.fillMaxWidth().height(110.dp).clickable(
-                                enabled = !solved && (!isTarget || selection != null)
-                            ) {
-                                if (isTarget) selection?.let { submit(it, item.id) }
-                                else selection = item.id
+                            modifier = Modifier.fillMaxWidth().height(cardHeight).clickable(enabled = !solved) {
+                                if (isTarget) {
+                                    if (selection != null) submit(selection!!, item.id) else selectedRight = item.id
+                                } else {
+                                    if (selectedRight != null) submit(item.id, selectedRight!!) else selection = item.id
+                                }
                             },
                             color = if (solved) Color(0xFFBDEDD7) else if (isTarget && wrongTarget == item.id) Color(0xFFFFD6DC)
+                                else if (isTarget && selectedRight == item.id) Color(0xFFFFE4A0)
                                 else if (!isTarget && selection == item.id) Color(0xFFFFE4A0)
                                 else if (isTarget) Color(0xFFECE6FF) else Color(0xFFE0F7EC),
                             shape = RoundedCornerShape(16.dp)
@@ -276,6 +287,7 @@ fun ShadowPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit)
     val levelData = remember(context, level) { com.yonamatch.app.data.ShadowLevelRepository(context).levels()[level - 1] }
     val game = remember(level, round) { com.yonamatch.app.data.ShadowGame(levelData.items) }
     var selection by remember(level, round) { mutableStateOf<String?>(null) }
+    var selectedRight by remember(level, round) { mutableStateOf<String?>(null) }
     var hintUsed by remember(level, round) { mutableStateOf(false) }
     var revision by remember(level, round) { mutableIntStateOf(0) }
     val completed = game.matched.toSet()
@@ -285,6 +297,7 @@ fun ShadowPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit)
             Spacer(Modifier.weight(1f))
             TextButton(onClick = {
                 selection = game.items.firstOrNull { it.id !in completed }?.id
+                selectedRight = null
                 if (selection != null) hintUsed = true
             }) { Text("💡", fontSize = 34.sp) }
         }
