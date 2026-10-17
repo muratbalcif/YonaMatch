@@ -271,12 +271,12 @@ fun MemoryPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit)
             mismatch = false
         }
     }
-    val columns = if (cards.size <= 6) 3 else 4
+    val columns = 3
     val rows = (cards.size + columns - 1) / columns
     
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("🦁", fontSize = 32.sp)
+            Text("Bölüm $level", fontSize = 20.sp, color = Color(0xFF174577))
             Spacer(Modifier.weight(1f))
             TextButton(onClick = {
                 val first = cards.indices.firstOrNull { it !in matched }
@@ -285,16 +285,17 @@ fun MemoryPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit)
                     hintUsed = true
                     hintPair = setOf(first, second)
                 }
-            }) { Text("💡", fontSize = 34.sp) }
+            }) { Text("💡 İpucu", fontSize = 18.sp, color = Color(0xFF174577)) }
         }
         BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f)) {
-            val cardHeight = ((maxHeight - 8.dp * (rows - 1)) / rows).coerceAtLeast(64.dp)
+            val cardWidth = (maxWidth - 20.dp) / columns
+            val cardHeight = minOf(cardWidth * 1.05f, (maxHeight - 10.dp * (rows - 1)) / rows)
             LazyVerticalGrid(
             columns = GridCells.Fixed(columns),
             modifier = Modifier.fillMaxSize(),
             userScrollEnabled = false,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             items(cards.size) { index ->
                 val open = index in revealed || index in matched || index in hintPair
@@ -315,11 +316,12 @@ fun MemoryPlayScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> Unit)
                             }
                         } else revealed = next
                     },
-                    color = if (index in matched) Color(0xFFBDEDD7) else Color(0xFFD7EBFF),
-                    shape = RoundedCornerShape(16.dp)
+                    color = if (index in matched) Color(0xFFFFE5A5) else if (open) Color.White else Color(0xFF79BFF9),
+                    shape = RoundedCornerShape(15.dp),
+                    shadowElevation = 4.dp
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text(if (open) cards[index] else "❔", fontSize = if (rows <= 2) 60.sp else if (rows == 3) 48.sp else 40.sp)
+                        Text(if (open) cards[index] else "?", fontSize = if (open) 44.sp else 50.sp, color = if (open) Color(0xFF213D65) else Color(0xFFDBF0FF))
                     }
                 }
             }
