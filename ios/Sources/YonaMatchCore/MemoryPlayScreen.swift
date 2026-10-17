@@ -34,7 +34,7 @@ struct MemoryPlayScreen: View {
     var body: some View {
         VStack(spacing: 12) {
             HStack {
-                Text("🦁").font(.system(size: 32))
+                Text("Bölüm \(level)").font(.system(size: 20, weight: .semibold)).foregroundStyle(Color(red: 0.09, green: 0.27, blue: 0.47))
                 Spacer()
                 Button {
                     if let first = game.cards.indices.first(where: { !game.matched.contains($0) }),
@@ -42,20 +42,23 @@ struct MemoryPlayScreen: View {
                         hintUsed = true
                         hintPair = [first, second]
                     }
-                } label: { Text("💡").font(.system(size: 34)) }
+                } label: { Text("💡 İpucu").font(.system(size: 18, weight: .semibold)) }
             }
-            let columns = game.cards.count <= 6 ? 3 : 4
+            let columns = 3
             let rows = (game.cards.count + columns - 1) / columns
             GeometryReader { geometry in
-                let cardHeight = max(76, (geometry.size.height - CGFloat(rows - 1) * 8) / CGFloat(rows))
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: columns), spacing: 8) {
+                let cardWidth = (geometry.size.width - 20) / CGFloat(columns)
+                let cardHeight = min(cardWidth * 1.05, (geometry.size.height - CGFloat(rows - 1) * 10) / CGFloat(rows))
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: columns), spacing: 10) {
                 ForEach(game.cards.indices, id: \.self) { index in
                     Button { choose(index) } label: {
-                        Text(game.revealed.contains(index) || game.matched.contains(index) || hintPair.contains(index) ? game.cards[index] : "❔")
-                            .font(.system(size: rows <= 2 ? 60 : (rows == 3 ? 48 : 40)))
+                        Text(game.revealed.contains(index) || game.matched.contains(index) || hintPair.contains(index) ? game.cards[index] : "?")
+                            .font(.system(size: game.revealed.contains(index) || game.matched.contains(index) || hintPair.contains(index) ? 44 : 50, weight: .semibold))
                             .frame(maxWidth: .infinity, minHeight: cardHeight)
-                            .background(game.matched.contains(index) ? Color.mint.opacity(0.5) : Color.blue.opacity(0.25),
-                                        in: RoundedRectangle(cornerRadius: 16))
+                            .foregroundStyle(game.revealed.contains(index) || game.matched.contains(index) || hintPair.contains(index) ? Color(red: 0.13, green: 0.24, blue: 0.40) : .white.opacity(0.85))
+                            .background(game.matched.contains(index) ? Color(red: 1, green: 0.9, blue: 0.65) : (game.revealed.contains(index) || hintPair.contains(index) ? Color.white : Color(red: 0.47, green: 0.75, blue: 0.98)),
+                                        in: RoundedRectangle(cornerRadius: 15))
+                            .shadow(color: .black.opacity(0.09), radius: 3, y: 2)
                     }
                     .disabled(game.awaitingReset || game.matched.contains(index) || game.revealed.contains(index))
                 }
