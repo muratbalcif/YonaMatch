@@ -145,13 +145,13 @@ private fun PairMatchingScreen(
             }) { Text("💡", fontSize = 34.sp) }
         }
         BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f)) {
-            val rows = if (game.items.size <= 3) game.items.size else (game.items.size + 1) / 2
+            val rows = game.items.size
             val cardHeight = ((maxHeight - 8.dp * (rows - 1)) / rows).coerceAtLeast(64.dp)
             Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             listOf(false, true).forEach { isTarget ->
                 val entries = if (isTarget) game.targets else game.items
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed(if (entries.size <= 3) 1 else 2),
+                    columns = GridCells.Fixed(1),
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                     userScrollEnabled = false,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -171,7 +171,7 @@ private fun PairMatchingScreen(
                                 else if (isTarget && selectedRight == item.id) Color(0xFFFFE4A0)
                                 else if (!isTarget && selection == item.id) Color(0xFFFFE4A0)
                                 else if (isTarget) Color(0xFFECE6FF) else Color(0xFFE0F7EC),
-                            shape = RoundedCornerShape(16.dp)
+                            shape = RoundedCornerShape(22.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 if (solved) Text("✓", fontSize = 42.sp)
@@ -184,9 +184,9 @@ private fun PairMatchingScreen(
                                         "orange" -> Color(0xFFFF9800); "pink" -> Color(0xFFFF69B4)
                                         else -> Color.Gray
                                     }
-                                    Box(Modifier.size(54.dp).background(shade, androidx.compose.foundation.shape.CircleShape))
+                                    Box(Modifier.size(72.dp).background(shade, androidx.compose.foundation.shape.CircleShape))
                                 } else {
-                                    Text(item.symbol, fontSize = 58.sp, color = if (isTarget && mode == 2) Color(0xFF9CA3AF) else Color(0xFF1F2937))
+                                    Text(item.symbol, fontSize = 72.sp, color = if (isTarget && mode == 2) Color(0xFF9CA3AF) else Color(0xFF1F2937))
                                 }
                             }
                         }
