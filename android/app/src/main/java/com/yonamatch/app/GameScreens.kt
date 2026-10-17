@@ -34,7 +34,7 @@ fun AssociationGameScreen(level: Int, round: Int, onComplete: (Int, Boolean) -> 
     var selectedRight by remember(level, round) { mutableStateOf<String?>(null) }
     var hintUsed by remember(level, round) { mutableStateOf(false) }
     var revision by remember(level, round) { mutableIntStateOf(0) }
-    val cardHeight = (LocalConfiguration.current.screenHeightDp.dp - 220.dp - (if (game.items.size <= 3) 0.dp else 8.dp) * (if (game.items.size <= 3) game.items.size - 1 else (game.items.size + 1) / 2 - 1)) / (if (game.items.size <= 3) game.items.size else (game.items.size + 1) / 2)
+    val cardHeight = ((LocalConfiguration.current.screenHeightDp.dp - 220.dp - 8.dp * (if (game.items.size <= 3) game.items.size - 1 else (game.items.size + 1) / 2 - 1)) / (if (game.items.size <= 3) game.items.size else (game.items.size + 1) / 2)).coerceAtLeast(76.dp)
     var incorrect by remember(level, round) { mutableStateOf<String?>(null) }
     val completed = game.matched.toSet()
     fun submit(source: String, target: String) {
@@ -122,7 +122,7 @@ private fun PairMatchingScreen(
     var selectedRight by remember(type, level, round) { mutableStateOf<String?>(null) }
     var hintUsed by remember(type, level, round) { mutableStateOf(false) }
     var revision by remember(type, level, round) { mutableIntStateOf(0) }
-    val cardHeight = (LocalConfiguration.current.screenHeightDp.dp - 220.dp - 8.dp * (if (game.items.size <= 3) game.items.size - 1 else (game.items.size + 1) / 2 - 1)) / (if (game.items.size <= 3) game.items.size else (game.items.size + 1) / 2)
+    val cardHeight = (LocalConfiguration.current.screenHeightDp.dp - 220.dp - 8.dp * (if (game.items.size <= 3) game.items.size - 1 else (game.items.size + 1) / 2 - 1)) / (if (game.items.size <= 3) game.items.size else (game.items.size + 1) / 2).coerceAtLeast(76.dp)
     var wrongTarget by remember(type, level, round) { mutableStateOf<String?>(null) }
     val completed = game.matched.toSet()
     fun submit(source: String, target: String) {
