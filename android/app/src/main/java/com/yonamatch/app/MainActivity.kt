@@ -137,6 +137,18 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun YonaMatchApp() {
     val context = LocalContext.current
+    val profilePrefs = remember(context) { context.getSharedPreferences("yonamatch_child_profile", 0) }
+    var profileReady by remember { mutableStateOf(profilePrefs.getBoolean("completed", false)) }
+    val childName = profilePrefs.getString("name", "Yona") ?: "Yona"
+    val childAvatar = profilePrefs.getString("avatar", "🦁") ?: "🦁"
+    if (!profileReady) {
+        ChildProfileScreen { name, avatar, age ->
+            profilePrefs.edit().putString("name", name).putString("avatar", avatar)
+                .putString("age", age).putBoolean("completed", true).apply()
+            profileReady = true
+        }
+        return
+    }
     val levels = remember(context) { LevelRepository(context).memoryLevels() }
     val progress = remember(context) { ProgressRepository(context) }
     val gameProgress = remember(context) { GameProgressStore(context) }
@@ -172,10 +184,10 @@ private fun YonaMatchApp() {
             "home" -> {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Surface(color = Color(0xFFFFE4B5), shape = RoundedCornerShape(50)) {
-                        Text("🦁", modifier = Modifier.padding(9.dp), fontSize = 29.sp)
+                        Text(childAvatar, modifier = Modifier.padding(9.dp), fontSize = 29.sp)
                     }
                     Spacer(Modifier.width(12.dp))
-                    Text("Merhaba Yona! 👋", modifier = Modifier.weight(1f),
+                    Text("Merhaba $childName! 👋", modifier = Modifier.weight(1f),
                         fontSize = 20.sp, fontWeight = FontWeight.Bold, color = navy)
                     Text("⭐", fontSize = 25.sp)
                     Text(" ${listOf("memory", "shadow", "shape", "color", "halves", "association").sumOf { game -> (1..20).sumOf { stage -> gameProgress.bestStars(game, stage) } }}", fontSize = 19.sp, fontWeight = FontWeight.Bold, color = navy)
