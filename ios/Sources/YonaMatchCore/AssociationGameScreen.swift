@@ -59,7 +59,16 @@ struct AssociationPlayScreen: View {
                                 .background(game.matched.contains(item.id) ? Color.mint.opacity(0.5) : (selectedSource == item.id ? Color.yellow.opacity(0.5) : Color.mint.opacity(0.2)), in: RoundedRectangle(cornerRadius: 16))
                         }
                         .disabled(game.matched.contains(item.id))
-                        .onDrag { NSItemProvider(object: item.id as NSString) }
+                        .onDrag { NSItemProvider(object: "left:"+item.id as NSString) }
+                        .onDrop(of: [.plainText], isTargeted: nil) { providers in
+                            guard !game.matched.contains(item.id), let provider = providers.first else { return false }
+                            _ = provider.loadObject(ofClass: NSString.self) { value, _ in
+                                guard let payload = value as? String, payload.hasPrefix("right:") else { return }
+                                let target = String(payload.dropFirst(6))
+                                DispatchQueue.main.async { match(item.id, target) }
+                            }
+                            return true
+                        }
                     }
                 }
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: game.targets.count <= 3 ? 1 : 2), spacing: 8) {
@@ -75,10 +84,12 @@ struct AssociationPlayScreen: View {
                                 .background(game.matched.contains(sourceId) ? Color.mint.opacity(0.5) : (wrongTarget == item.id ? Color.red.opacity(0.2) : (selectedRight == item.id ? Color.yellow.opacity(0.5) : Color.purple.opacity(0.2))), in: RoundedRectangle(cornerRadius: 16))
                         }
                         .disabled(game.matched.contains(sourceId))
+                        .onDrag { NSItemProvider(object: "right:"+item.id as NSString) }
                         .onDrop(of: [.plainText], isTargeted: nil) { providers in
-                            guard let provider = providers.first else { return false }
+                            guard !game.matched.contains(sourceId), let provider = providers.first else { return false }
                             _ = provider.loadObject(ofClass: NSString.self) { value, _ in
-                                guard let source = value as? String else { return }
+                                guard let payload = value as? String, payload.hasPrefix("left:") else { return }
+                                let source = String(payload.dropFirst(5))
                                 DispatchQueue.main.async { match(source, item.id) }
                             }
                             return true
