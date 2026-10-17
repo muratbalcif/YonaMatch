@@ -141,6 +141,15 @@ private fun YonaMatchApp() {
     var profileReady by remember { mutableStateOf(profilePrefs.getBoolean("completed", false)) }
     val childName = profilePrefs.getString("name", "Yona") ?: "Yona"
     val childAvatar = profilePrefs.getString("avatar", "🦁") ?: "🦁"
+    var openingStage by remember { mutableIntStateOf(if (profileReady) 2 else 0) }
+    if (openingStage < 2) {
+        OpeningScreen(
+            splash = openingStage == 0,
+            onSplashFinished = { openingStage = 1 },
+            onStart = { openingStage = 2 }
+        )
+        return
+    }
     if (!profileReady) {
         ChildProfileScreen { name, avatar, age ->
             profilePrefs.edit().putString("name", name).putString("avatar", avatar)
