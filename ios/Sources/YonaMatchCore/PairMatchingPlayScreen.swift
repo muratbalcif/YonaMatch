@@ -40,7 +40,9 @@ struct PairMatchingPlayScreen: View {
                 .frame(width: 28, height: 62)
                 .clipped()
         } else {
-            Text(item.symbol).font(.system(size: 46))
+            Text(item.symbol)
+                .font(.system(size: 58, weight: .bold))
+                .foregroundStyle(isTarget ? Color.gray : Color.primary)
         }
     }
 
@@ -71,7 +73,7 @@ struct PairMatchingPlayScreen: View {
             GeometryReader { geometry in
                     HStack(alignment: .top, spacing: 12) {
                 let rows = (game.items.count <= 3 ? game.items.count : (game.items.count + 1) / 2)
-                let cardHeight = max(76, (geometry.size.height - CGFloat(rows - 1) * 8) / CGFloat(rows))
+                let cardHeight = max(64, (geometry.size.height - CGFloat(rows - 1) * 8) / CGFloat(rows))
                 ForEach([false, true], id: \.self) { isTarget in
                     let entries = isTarget ? game.targets : game.items
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: entries.count <= 3 ? 1 : 2), spacing: 8) {
